@@ -68,7 +68,6 @@ def create_app(settings: Settings | None = None, service: RepairService | None =
     app = FastAPI(title="Ripple private API", version="1.0.0", lifespan=lifespan, docs_url="/docs" if settings.mode == "demo" else None, redoc_url=None)
     app.state.store, app.state.service, app.state.settings = store, service, settings
     app.state.daily_service = daily_service
-    app.add_middleware(CORSMiddleware, allow_origins=list(settings.allowed_origins), allow_credentials=False, allow_methods=["GET", "POST", "OPTIONS"], allow_headers=["Content-Type", "Authorization"], max_age=600)
 
     @app.middleware("http")
     async def limits(request: Request, call_next):
@@ -96,6 +95,9 @@ def create_app(settings: Settings | None = None, service: RepairService | None =
         response.headers["Cache-Control"] = "no-store"
         response.headers["X-Content-Type-Options"] = "nosniff"
         return response
+
+    # Added last so CORS wraps early size/rate rejections as well as route responses.
+    app.add_middleware(CORSMiddleware, allow_origins=list(settings.allowed_origins), allow_credentials=False, allow_methods=["GET", "POST", "OPTIONS"], allow_headers=["Content-Type", "Authorization"], max_age=600)
 
     async def authorize(authorization: str | None = Header(default=None)):
         if settings.mode == "live" and not settings.access_token:
@@ -126,6 +128,10 @@ def create_app(settings: Settings | None = None, service: RepairService | None =
     @app.get("/health")
     async def health():
         return {"status": "ok", "mode": settings.mode, "configured": {"nebius": bool(settings.nebius_api_key), "tavily": bool(settings.enable_tavily and settings.tavily_api_key)}, "requiresAuth": bool(settings.access_token) or settings.mode == "live", "models": {"nano": settings.nano_model, "super": settings.super_model, "ultra": settings.ultra_model if settings.enable_ultra else None}, "queue": "inline" if settings.inline_jobs else "remote-worker"}
+
+    @app.get("/api/session", dependencies=[Depends(authorize)])
+    async def session():
+        return {"status": "ok", "mode": settings.mode}
 
     @app.post("/api/repair", response_model=RepairResult, response_model_exclude_none=True, dependencies=[Depends(authorize)])
     async def repair(payload: RepairRequest):

@@ -13,6 +13,7 @@ fi
 
 # The application handles Bearer auth so browser CORS preflight can succeed.
 # Provider and app credentials are injected from SecretStash, never the image.
+# These CLI options are string arrays: repeat the flag for each assignment.
 nebius ai endpoint create \
   --name ripple-api \
   --image "$RIPPLE_IMAGE" \
@@ -22,5 +23,13 @@ nebius ai endpoint create \
   --shm-size 128Mi \
   --subnet-id "$NEBIUS_SUBNET_ID" \
   --container-port 8000 \
-  --env "RIPPLE_MODE=live,RIPPLE_ALLOWED_ORIGINS=$RIPPLE_WEB_ORIGIN,RIPPLE_INLINE_JOBS=${RIPPLE_INLINE_JOBS:-true},RIPPLE_ENABLE_ULTRA=${RIPPLE_ENABLE_ULTRA:-false},RIPPLE_ENABLE_TAVILY=${RIPPLE_ENABLE_TAVILY:-false},RIPPLE_DAILY_LIVE_LIMIT=${RIPPLE_DAILY_LIVE_LIMIT:-25}" \
-  --env-secret "NEBIUS_API_KEY=$RIPPLE_SECRET_SELECTOR,RIPPLE_ACCESS_TOKEN=$RIPPLE_SECRET_SELECTOR,RIPPLE_WORKER_TOKEN=$RIPPLE_SECRET_SELECTOR,TAVILY_API_KEY=$RIPPLE_SECRET_SELECTOR"
+  --env "RIPPLE_MODE=live" \
+  --env "RIPPLE_ALLOWED_ORIGINS=$RIPPLE_WEB_ORIGIN" \
+  --env "RIPPLE_INLINE_JOBS=${RIPPLE_INLINE_JOBS:-true}" \
+  --env "RIPPLE_ENABLE_ULTRA=${RIPPLE_ENABLE_ULTRA:-false}" \
+  --env "RIPPLE_ENABLE_TAVILY=${RIPPLE_ENABLE_TAVILY:-false}" \
+  --env "RIPPLE_DAILY_LIVE_LIMIT=${RIPPLE_DAILY_LIVE_LIMIT:-25}" \
+  --env-secret "NEBIUS_API_KEY=$RIPPLE_SECRET_SELECTOR" \
+  --env-secret "RIPPLE_ACCESS_TOKEN=$RIPPLE_SECRET_SELECTOR" \
+  --env-secret "RIPPLE_WORKER_TOKEN=$RIPPLE_SECRET_SELECTOR" \
+  --env-secret "TAVILY_API_KEY=$RIPPLE_SECRET_SELECTOR"

@@ -1,5 +1,10 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { assist, safeEndpoint } from "../src/daily/assist";
+import {
+  assist,
+  presetServiceUrl,
+  safeEndpoint,
+  verifyConnection,
+} from "../src/daily/assist";
 const connection = { url: "https://service.example", token: "memory-only" };
 const task = {
   title: "Write a proposal",
@@ -17,7 +22,10 @@ const result = {
   sources: [],
   trace: [],
 };
-afterEach(() => vi.unstubAllGlobals());
+afterEach(() => {
+  vi.unstubAllGlobals();
+  vi.unstubAllEnvs();
+});
 function mock(data: unknown, status = 200) {
   vi.stubGlobal(
     "fetch",
@@ -31,6 +39,121 @@ function mock(data: unknown, status = 200) {
       ),
   );
 }
+describe("explicit assistant connection", () => {
+  const liveHealth = {
+    status: "ok",
+    mode: "live",
+    requiresAuth: true,
+    configured: { nebius: true, tavily: false },
+  };
+  function replies(session: unknown, status = 200, health = liveHealth) {
+    const fetcher = vi
+      .fn()
+      .mockResolvedValueOnce(new Response(JSON.stringify(health)))
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify(session), { status }),
+      );
+    vi.stubGlobal("fetch", fetcher);
+    return fetcher;
+  }
+  it("prefills only a safe public URL and makes no connection request", () => {
+    const fetcher = vi.fn();
+    vi.stubGlobal("fetch", fetcher);
+    vi.stubEnv("VITE_RIPPLE_API_URL", " https://ripple.example/ ");
+    expect(presetServiceUrl()).toBe("https://ripple.example");
+    expect(presetServiceUrl("")).toBe("");
+    expect(presetServiceUrl(undefined)).toBe("https://ripple.example");
+    for (const raw of [
+      null,
+      "http://public.example",
+      "https://user:secret@ripple.example",
+      "https://ripple.example?token=secret",
+      "not a URL",
+    ])
+      expect(presetServiceUrl(raw)).toBe("");
+    vi.stubEnv("VITE_RIPPLE_API_URL", "");
+    expect(presetServiceUrl()).toBe("");
+    expect(fetcher).not.toHaveBeenCalled();
+  });
+  it("checks health without credentials, then authenticates without sending task text", async () => {
+    const fetcher = replies({ status: "ok", mode: "live" });
+    await expect(
+      verifyConnection({ url: `${connection.url}/`, token: " memory-only " }),
+    ).resolves.toEqual({ connection, mode: "live" });
+    expect(fetcher).toHaveBeenCalledTimes(2);
+    expect(fetcher.mock.calls[0]).toEqual([
+      `${connection.url}/health`,
+      expect.objectContaining({ method: "GET", cache: "no-store" }),
+    ]);
+    expect(fetcher.mock.calls[0][1].headers).toBeUndefined();
+    expect(fetcher.mock.calls[1]).toEqual([
+      `${connection.url}/api/session`,
+      expect.objectContaining({
+        method: "GET",
+        headers: { Authorization: "Bearer memory-only" },
+        cache: "no-store",
+      }),
+    ]);
+    for (const [, request] of fetcher.mock.calls)
+      expect(request.body).toBeUndefined();
+  });
+  it("rejects an incorrect access code despite healthy service status", async () => {
+    const fetcher = replies({ detail: "An organizer access token is required." }, 401);
+    await expect(verifyConnection(connection)).rejects.toThrow(
+      "That access code was not accepted",
+    );
+    expect(fetcher).toHaveBeenCalledTimes(2);
+  });
+  it("requires a code for live mode even if the health auth flag is absent or false", async () => {
+    const fetcher = replies(
+      { status: "ok", mode: "live" },
+      200,
+      { ...liveHealth, requiresAuth: false },
+    );
+    await expect(
+      verifyConnection({ ...connection, token: " " }),
+    ).rejects.toThrow("Enter the access code");
+    expect(fetcher).toHaveBeenCalledTimes(1);
+    replies({ status: "ok", mode: "live" }, 200, {
+      ...liveHealth,
+      requiresAuth: false,
+    });
+    await expect(verifyConnection(connection)).resolves.toMatchObject({ mode: "live" });
+    expect(fetch).toHaveBeenCalledTimes(2);
+  });
+  it.each([
+    { status: "ok", mode: "demo" },
+    { status: "pending", mode: "live" },
+    null,
+  ])("rejects an invalid authenticated response %j", async (session) => {
+    replies(session);
+    await expect(verifyConnection(connection)).rejects.toThrow(
+      "invalid connection check",
+    );
+  });
+  it("checks access for a protected demo service while leaving public demos compatible", async () => {
+    replies({ status: "ok", mode: "demo" }, 200, {
+      ...liveHealth,
+      mode: "demo",
+    });
+    await expect(verifyConnection(connection)).resolves.toMatchObject({ mode: "demo" });
+    expect(fetch).toHaveBeenCalledTimes(2);
+    mock({ status: "ok", mode: "demo", requiresAuth: false });
+    await expect(
+      verifyConnection({ ...connection, token: "" }),
+    ).resolves.toEqual({ connection: { ...connection, token: "" }, mode: "demo" });
+    expect(fetch).toHaveBeenCalledTimes(1);
+  });
+  it("does not accept an unconfigured live service or hide a session outage", async () => {
+    mock({ ...liveHealth, configured: { nebius: false, tavily: false } });
+    await expect(verifyConnection(connection)).rejects.toThrow("not ready for AI");
+    expect(fetch).toHaveBeenCalledTimes(1);
+    replies({ error: { message: "Service access is temporarily unavailable." } }, 503);
+    await expect(verifyConnection(connection)).rejects.toThrow(
+      "Service access is temporarily unavailable.",
+    );
+  });
+});
 describe("reviewed assistant boundary", () => {
   it("sends only requested context with the access token in headers", async () => {
     mock(result);

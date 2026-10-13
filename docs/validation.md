@@ -2,6 +2,14 @@
 
 This record separates local and mocked checks from actual provider execution. Real Nano and Super calls were verified on October 13, 2026. Tavily and Cloud hosting remain unverified. Mock tests alone do not establish model quality, latency, cost, or availability.
 
+## Hosted connection readiness — October 13, 2026
+
+The connection dialog now validates the app access code through authenticated `GET /api/session` before reporting a connection. An optional public URL preset fills the address only; it does not connect or transfer task data. Closing a pending check cancels it. Allowed-origin responses retain CORS headers for early request-size and rate-limit errors, so the browser can show the actual failure.
+
+Verification passed **146 frontend tests**, **171 Python tests**, the production build and three targeted browser checks: the real local rules API, rejected/accepted access-code flow without task transfer, and cancellation. The deployment script now repeats each `--env` and `--env-secret` argument as required by the installed CLI. These checks made no paid provider calls.
+
+Cloud browser federation authentication succeeded, but the signed-in account's tenant list was empty. No Cloud resources were created. Account onboarding/billing or access to an existing tenant is still required before the tested image can be deployed.
+
 ## Real daily assistance — October 13, 2026
 
 [Redacted synthetic evidence](evidence/daily-live-2026-10-13.json) records **10 actual Token Factory attempts: 9 completed and 1 timed out**. No automatic retries or search calls were made. Returned identities were `nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B` and `nvidia/nemotron-3-super-120b-a12b`. Every call was capped at 1,200 completion tokens and one choice.

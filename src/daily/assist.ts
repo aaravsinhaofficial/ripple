@@ -37,6 +37,70 @@ export function safeEndpoint(raw: string): string {
     throw new Error("Use an HTTPS service URL, or HTTP on localhost.");
   return url.href.replace(/\/$/, "");
 }
+export function presetServiceUrl(
+  raw: unknown = import.meta.env.VITE_RIPPLE_API_URL,
+): string {
+  if (typeof raw !== "string" || !raw.trim()) return "";
+  try {
+    return safeEndpoint(raw);
+  } catch {
+    return "";
+  }
+}
+export async function verifyConnection(
+  draft: Connection,
+  signal?: AbortSignal,
+): Promise<{ connection: Connection; mode: "demo" | "live" }> {
+  const connection = {
+    url: safeEndpoint(draft.url),
+    token: draft.token.trim(),
+  };
+  const timeout = AbortSignal.timeout(10000);
+  const requestSignal = signal ? AbortSignal.any([signal, timeout]) : timeout;
+  const response = await fetch(`${connection.url}/health`, {
+    method: "GET",
+    cache: "no-store",
+    signal: requestSignal,
+  });
+  if (!response.ok)
+    throw new Error("That service did not respond successfully.");
+  const health = await response.json().catch(() => null);
+  if (!health || !["demo", "live"].includes(health.mode))
+    throw new Error("This does not look like a Ripple service.");
+  if (health.mode === "live" && health.configured?.nebius !== true)
+    throw new Error(
+      "This service is not ready for AI yet. Contact its owner and try again later.",
+    );
+  if (health.requiresAuth === true || health.mode === "live") {
+    if (!connection.token)
+      throw new Error("Enter the access code shared by the service owner.");
+    const sessionResponse = await fetch(`${connection.url}/api/session`, {
+      method: "GET",
+      headers: { Authorization: `Bearer ${connection.token}` },
+      cache: "no-store",
+      signal: requestSignal,
+    });
+    const session = await sessionResponse.json().catch(() => null);
+    if (!sessionResponse.ok) {
+      if (sessionResponse.status === 401 || sessionResponse.status === 403)
+        throw new Error(
+          "That access code was not accepted. Check it and try again.",
+        );
+      throw new Error(
+        typeof session?.error?.message === "string"
+          ? session.error.message
+          : typeof session?.detail === "string"
+            ? session.detail
+            : "Could not verify access to this service. Please try again.",
+      );
+    }
+    if (session?.status !== "ok" || session.mode !== health.mode)
+      throw new Error(
+        "The service returned an invalid connection check. Please try again.",
+      );
+  }
+  return { connection, mode: health.mode };
+}
 export async function assist(
   connection: Connection,
   action: "capture" | "breakdown" | "research",

@@ -69,6 +69,67 @@ def test_repair_rate_limit_does_not_limit_polling(settings, payload):
             assert client.get(created.json()["pollUrl"]).status_code == 200
 
 
+@pytest.mark.parametrize("origin,allowed", [("http://localhost:5173", True), ("https://untrusted.example", False)])
+def test_oversized_request_error_is_readable_only_from_allowed_origins(settings, origin, allowed):
+    with TestClient(create_app(settings)) as client:
+        response = client.post("/api/daily/assist", content=b"x" * 65537, headers={"Origin": origin})
+        assert response.status_code == 413
+        assert response.json()["error"]["code"] == "too_large"
+        assert response.headers.get("access-control-allow-origin") == (origin if allowed else None)
+
+
+@pytest.mark.parametrize("origin,allowed", [("http://localhost:5173", True), ("https://untrusted.example", False)])
+def test_rate_limit_error_keeps_cors_and_does_not_block_preflight(settings, payload, origin, allowed):
+    settings = replace(settings, max_requests_per_minute=1, access_token="organizer")
+    with TestClient(create_app(settings)) as client:
+        headers = {"Origin": origin, "Authorization": "Bearer organizer"}
+        assert client.post("/api/jobs", json=payload, headers=headers).status_code == 202
+        response = client.post("/api/daily/assist", json={}, headers=headers)
+        assert response.status_code == 429
+        assert response.json()["error"]["code"] == "rate_limit"
+        assert response.headers["retry-after"] == "60"
+        assert response.headers.get("access-control-allow-origin") == (origin if allowed else None)
+        preflight = client.options("/api/daily/assist", headers={
+            "Origin": "http://localhost:5173",
+            "Access-Control-Request-Method": "POST",
+            "Access-Control-Request-Headers": "authorization,content-type",
+        })
+        assert preflight.status_code == 200
+        assert preflight.headers["access-control-allow-origin"] == "http://localhost:5173"
+
+
+@pytest.mark.parametrize("token,status", [(None, 401), ("incorrect", 401), ("organizer", 200)])
+def test_session_validates_token_without_provider_calls_or_allowance_usage(settings, monkeypatch, token, status):
+    settings = replace(settings, mode="live", access_token="organizer", nebius_api_key="mock-provider-key", max_requests_per_minute=1, max_live_repairs_per_day=1)
+    app = create_app(settings)
+
+    async def must_not_call_provider(*args, **kwargs):
+        pytest.fail("Session validation must not run an AI request")
+
+    monkeypatch.setattr(app.state.service, "repair", must_not_call_provider)
+    monkeypatch.setattr(app.state.daily_service, "assist", must_not_call_provider)
+    with TestClient(app) as client:
+        headers = {"Origin": "http://localhost:5173"}
+        if token is not None:
+            headers["Authorization"] = f"Bearer {token}"
+        for _ in range(3):
+            response = client.get("/api/session", headers=headers)
+            assert response.status_code == status
+            assert response.headers["access-control-allow-origin"] == "http://localhost:5173"
+            assert response.headers["cache-control"] == "no-store"
+            if status == 200:
+                assert response.json() == {"status": "ok", "mode": "live"}
+        # The first paid reservation remains available after repeated connection checks.
+        app.state.store.reserve_live(1)
+        with pytest.raises(QueueError, match="allowance"):
+            app.state.store.reserve_live(1)
+
+
+def test_session_check_cannot_mark_unconfigured_live_access_as_connected(settings):
+    with TestClient(create_app(replace(settings, mode="live"))) as client:
+        assert client.get("/api/session").status_code == 503
+
+
 def test_queue_survives_process_reopen_and_has_unique_leases(settings, payload):
     store = JobStore(settings.database_path)
     job_id = store.create(RepairRequest.model_validate(payload))

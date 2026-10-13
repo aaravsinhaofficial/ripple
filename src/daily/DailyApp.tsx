@@ -52,7 +52,8 @@ import CommitmentEditor from "./CommitmentEditor";
 import DailyModal from "./DailyModal";
 import {
   assist,
-  safeEndpoint,
+  presetServiceUrl,
+  verifyConnection,
   type AssistResult,
   type Connection,
 } from "./assist";
@@ -289,13 +290,14 @@ export default function DailyApp() {
     url: "",
     token: "",
   });
-  const [connectionDraft, setConnectionDraft] = useState<Connection>({
-    url: "",
+  const [connectionDraft, setConnectionDraft] = useState<Connection>(() => ({
+    url: presetServiceUrl(),
     token: "",
-  });
+  }));
   const [connectionStatus, setConnectionStatus] = useState("");
   const [busy, setBusy] = useState(false);
   const assistController = useRef<AbortController | null>(null);
+  const connectionController = useRef<AbortController | null>(null);
   const [assistResult, setAssistResult] = useState<AssistResult | null>(null);
   const [assistTask, setAssistTask] = useState<DailyTask | null>(null);
   const [focusId, setFocusId] = useState<string | null>(null);
@@ -379,6 +381,7 @@ export default function DailyApp() {
     const id = setTimeout(() => setToast(""), 5500);
     return () => clearTimeout(id);
   }, [toast]);
+  useEffect(() => () => connectionController.current?.abort(), []);
   useEffect(() => {
     if (focusEnds === null) return;
     const update = () => {
@@ -705,36 +708,28 @@ export default function DailyApp() {
     }
   }
   async function testConnection() {
+    connectionController.current?.abort();
+    const controller = new AbortController();
+    connectionController.current = controller;
     setBusy(true);
     setConnectionStatus("");
     try {
-      const url = safeEndpoint(connectionDraft.url);
-      const response = await fetch(`${url}/health`, {
-        signal: AbortSignal.timeout(10000),
-      });
-      if (!response.ok)
-        throw new Error("That service did not respond successfully.");
-      const health = await response.json();
-      if (!["demo", "live"].includes(health.mode))
-        throw new Error("This does not look like a Ripple service.");
-      if (health.mode === "live" && !health.configured?.nebius)
-        throw new Error(
-          "This live service still needs its server-side Nebius key.",
-        );
-      if (health.requiresAuth && !connectionDraft.token)
-        throw new Error("This service requires an access token.");
-      setConnection({ url, token: connectionDraft.token });
+      const checked = await verifyConnection(connectionDraft, controller.signal);
+      if (controller.signal.aborted) return;
+      setConnection(checked.connection);
+      setConnectionDraft(checked.connection);
       setConnectionStatus(
-        health.mode === "live"
+        checked.mode === "live"
           ? "Connected to live AI. Requests run only when you choose an assistant action."
           : "Connected to a rules service. No AI model calls will be made.",
       );
     } catch (e) {
+      if (controller.signal.aborted) return;
       setConnectionStatus(
         e instanceof Error ? e.message : "Could not connect.",
       );
     } finally {
-      setBusy(false);
+      if (connectionController.current === controller) setBusy(false);
     }
   }
   function exportFile(kind: "text" | "calendar" | "backup") {
@@ -1633,7 +1628,12 @@ export default function DailyApp() {
             </span>
             <button
               onClick={() => {
-                setConnectionDraft(connection);
+                setConnectionDraft(
+                  connection.url
+                    ? connection
+                    : { url: presetServiceUrl(), token: "" },
+                );
+                setConnectionStatus("");
                 setModal("connect");
               }}
             >
@@ -2295,12 +2295,16 @@ export default function DailyApp() {
       {modal === "connect" && (
         <DailyModal
           title="A hand with the thinking."
-          onClose={() => setModal(null)}
+          onClose={() => {
+            connectionController.current?.abort();
+            setBusy(false);
+            setModal(null);
+          }}
         >
           <p className="d-modal-intro">
-            Your planner works without AI. Connect your own Ripple service to
-            turn messy notes into tasks, break down a difficult task, or find
-            useful sources.
+            Your planner works without AI. Use a Ripple service to turn messy
+            notes into tasks, break down a difficult task, or find useful sources.
+            Enter the service address and access code shared with you.
           </p>
           <label className="d-field">
             Ripple service URL
@@ -2308,17 +2312,19 @@ export default function DailyApp() {
               type="url"
               placeholder="https://your-service.example"
               value={connectionDraft.url}
+              disabled={busy}
               onChange={(e) =>
                 setConnectionDraft({ ...connectionDraft, url: e.target.value })
               }
             />
           </label>
           <label className="d-field">
-            Service access token
+            Access code
             <input
               type="password"
               autoComplete="off"
               value={connectionDraft.token}
+              disabled={busy}
               onChange={(e) =>
                 setConnectionDraft({
                   ...connectionDraft,
@@ -2328,9 +2334,8 @@ export default function DailyApp() {
             />
           </label>
           <p className="d-small-note">
-            Connection details stay in memory and clear on reload. Provider API
-            keys belong only on your server. Task text is sent only when you
-            request assistance.
+            Your access code stays in this tab and clears on reload. Connecting
+            checks access only; task text is sent when you request assistance.
           </p>
           {connectionStatus && (
             <p className="d-connection-status" role="status">
@@ -2342,8 +2347,10 @@ export default function DailyApp() {
               <button
                 className="d-button d-secondary"
                 onClick={() => {
+                  connectionController.current?.abort();
+                  setBusy(false);
                   setConnection({ url: "", token: "" });
-                  setConnectionDraft({ url: "", token: "" });
+                  setConnectionDraft({ url: presetServiceUrl(), token: "" });
                   setConnectionStatus("Disconnected.");
                 }}
               >

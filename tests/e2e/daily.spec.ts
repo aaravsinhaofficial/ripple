@@ -402,7 +402,7 @@ test('the real local HTTP assistant returns a reviewable rules draft and keeps i
   let dialog = page.getByRole('dialog');
   await dialog.getByLabel('Ripple service URL', { exact: true }).fill('http://127.0.0.1:8000');
   const token = 'browser-qa-memory-only';
-  await dialog.getByLabel('Service access token', { exact: true }).fill(token);
+  await dialog.getByLabel('Access code', { exact: true }).fill(token);
   await dialog.getByRole('button', { name: 'Connect service', exact: true }).click();
   await expect(dialog.getByRole('status')).toContainText('Connected to a rules service');
   await dialog.getByRole('button', { name: /^Close / }).click();
@@ -427,6 +427,58 @@ test('the real local HTTP assistant returns a reviewable rules draft and keeps i
   await expect(page.getByRole('button', { name: 'Optional AI assistant', exact: true })).toBeVisible();
   expect((await savedWorkspace(page)).tasks).toHaveLength(2);
   expect(errors).toEqual([]);
+});
+
+test('connecting verifies the access code without sending tasks and reload clears the connection', async ({ page }) => {
+  const requests: { path: string; method: string; authorization?: string; body: string | null }[] = [];
+  await page.route('https://daily-auth-test.invalid/**', async route => {
+    const request = route.request();
+    const path = new URL(request.url()).pathname;
+    requests.push({ path, method: request.method(), authorization: request.headers().authorization, body: request.postData() });
+    if (path === '/health') {
+      await route.fulfill({ json: { status: 'ok', mode: 'live', requiresAuth: true, configured: { nebius: true, tavily: false } } });
+      return;
+    }
+    if (path === '/api/session') {
+      const accepted = request.headers().authorization === 'Bearer shared-test-code';
+      await route.fulfill({ status: accepted ? 200 : 401, json: accepted ? { status: 'ok', mode: 'live' } : { detail: 'An organizer access token is required.' } });
+      return;
+    }
+    await route.abort();
+  });
+  await page.goto('./');
+  await quickTask(page, 'Private task kept on this device');
+  await page.getByRole('button', { name: 'Optional AI assistant', exact: true }).click();
+  let dialog = page.getByRole('dialog');
+  await dialog.getByLabel('Ripple service URL', { exact: true }).fill('https://daily-auth-test.invalid');
+  await dialog.getByLabel('Access code', { exact: true }).fill('incorrect-test-code');
+  expect(requests).toHaveLength(0);
+  await dialog.getByRole('button', { name: 'Connect service', exact: true }).click();
+  await expect(dialog.getByRole('status')).toContainText('That access code was not accepted');
+  await dialog.getByRole('button', { name: /^Close / }).click();
+  await expect(page.getByRole('button', { name: 'Optional AI assistant', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Assistant connected', exact: true })).toHaveCount(0);
+  expect((await savedWorkspace(page)).tasks.map(task => task.title)).toEqual(['Private task kept on this device']);
+
+  await page.getByRole('button', { name: 'Optional AI assistant', exact: true }).click();
+  dialog = page.getByRole('dialog');
+  await dialog.getByLabel('Ripple service URL', { exact: true }).fill('https://daily-auth-test.invalid');
+  await dialog.getByLabel('Access code', { exact: true }).fill('shared-test-code');
+  await dialog.getByRole('button', { name: 'Connect service', exact: true }).click();
+  await expect(dialog.getByRole('status')).toContainText('Connected to live AI');
+  expect(requests.map(request => request.path)).toEqual(['/health', '/api/session', '/health', '/api/session']);
+  expect(requests.filter(request => request.path === '/health').every(request => !request.authorization)).toBe(true);
+  expect(requests.every(request => request.method === 'GET' && request.body === null)).toBe(true);
+  await dialog.getByRole('button', { name: /^Close / }).click();
+  await expect(page.getByRole('button', { name: 'Assistant connected', exact: true })).toBeVisible();
+  const stored = await page.evaluate(() => [...Object.keys(localStorage).map(key => localStorage.getItem(key)), ...Object.keys(sessionStorage).map(key => sessionStorage.getItem(key))].join('\n'));
+  expect(stored).not.toContain('shared-test-code');
+  expect(stored).not.toContain('incorrect-test-code');
+  await page.reload();
+  await page.getByRole('button', { name: 'Optional AI assistant', exact: true }).click();
+  await expect(page.getByRole('dialog').getByLabel('Access code', { exact: true })).toHaveValue('');
+  expect(requests).toHaveLength(4);
+  expect((await savedWorkspace(page)).tasks[0].title).toBe('Private task kept on this device');
 });
 
 test('unreadable saved data stays recoverable and a forged approved plan is not displayed', async ({ page }) => {
@@ -474,6 +526,10 @@ test('closing a slow assistant request cancels it without overwriting the next c
       await route.fulfill({ json: { status: 'ok', mode: 'live', requiresAuth: false, configured: { nebius: true, tavily: false } } });
       return;
     }
+    if (route.request().url().endsWith('/api/session')) {
+      await route.fulfill({ json: { status: 'ok', mode: 'live' } });
+      return;
+    }
     await responseGate;
     try {
       await route.fulfill({ json: {
@@ -488,6 +544,7 @@ test('closing a slow assistant request cancels it without overwriting the next c
   await page.getByRole('button', { name: 'Optional AI assistant', exact: true }).click();
   let dialog = page.getByRole('dialog');
   await dialog.getByLabel('Ripple service URL', { exact: true }).fill('https://daily-cancel-test.invalid');
+  await dialog.getByLabel('Access code', { exact: true }).fill('synthetic-test-code');
   await dialog.getByRole('button', { name: 'Connect service', exact: true }).click();
   await expect(dialog.getByRole('status')).toContainText('Connected to live AI');
   await dialog.getByRole('button', { name: /^Close / }).click();
