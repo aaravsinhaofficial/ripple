@@ -17,8 +17,9 @@ nebius ai endpoint create \
   --name ripple-api \
   --image "$RIPPLE_IMAGE" \
   --platform cpu-d3 \
-  --preset 4vcpu-16gb \
+  --preset 2vcpu-8gb \
   --disk-size 100Gi \
+  --shm-size 128Mi \
   --subnet-id "$NEBIUS_SUBNET_ID" \
   --container-port 8000 \
   --env "RIPPLE_MODE=live,RIPPLE_ALLOWED_ORIGINS=$RIPPLE_WEB_ORIGIN,RIPPLE_INLINE_JOBS=${RIPPLE_INLINE_JOBS:-true},RIPPLE_ENABLE_ULTRA=${RIPPLE_ENABLE_ULTRA:-false},RIPPLE_ENABLE_TAVILY=${RIPPLE_ENABLE_TAVILY:-false},RIPPLE_DAILY_LIVE_LIMIT=${RIPPLE_DAILY_LIVE_LIMIT:-25}" \

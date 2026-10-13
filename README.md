@@ -53,7 +53,7 @@ The core planner runs in the browser with deterministic rules. Connect a private
 
 Provider credentials stay on the server. The daily workspace keeps the service URL and app access token in memory, clearing them on reload. Task text is sent only for a requested assistance action. Search receives the selected task title or research query, not the entire workspace or private task notes. Live failures remain visible; they are not replaced with a local answer.
 
-**Status:** the daily MVP and provider adapters are implemented and tested locally, with provider responses mocked. Real NVIDIA-on-Nebius calls, Tavily runtime, cloud deployment and the final public video still require credentials and verification. A connection health check is not live inference proof. See the [submission evidence checklist](docs/submission.md).
+**Status:** the daily MVP is published on GitHub Pages. Real Nano capture and Super task briefs ran through Nebius Token Factory on October 13, 2026, including the browser → authenticated local API → provider flow. The public site currently runs the local planner; hosted AI access, Tavily runtime and the final public video remain pending. See the [live findings](docs/feedback.md) and [submission evidence checklist](docs/submission.md).
 
 ## Run locally
 
@@ -75,7 +75,7 @@ cp .env.example .env
 .venv/bin/python -m uvicorn server.app:app --host 127.0.0.1 --port 8000
 ```
 
-The default `RIPPLE_MODE=demo` service makes rule-based drafts and checklists with zero provider calls. Connect `http://127.0.0.1:8000` from the app's assistance settings. For real inference, set `RIPPLE_MODE=live`, `NEBIUS_API_KEY`, and `RIPPLE_ACCESS_TOKEN` privately on the server. Optional web research also needs `RIPPLE_ENABLE_TAVILY=true` and `TAVILY_API_KEY`. Restart after changing configuration. Never put provider keys in `VITE_*`, frontend code or browser storage.
+The default `RIPPLE_MODE=demo` service makes rule-based drafts and checklists with zero provider calls. Connect `http://127.0.0.1:8000` from the app's assistance settings. For real inference, set `RIPPLE_MODE=live`, `NEBIUS_API_KEY`, and `RIPPLE_ACCESS_TOKEN` privately on the server. Optional web research also needs `RIPPLE_ENABLE_TAVILY=true` and `TAVILY_API_KEY`. Restart after changing configuration. The [daily evaluation command](docs/daily-live-evaluation.md) prepares zero-call fixtures by default and can run one explicitly selected live case. Never put provider keys in `VITE_*`, frontend code or browser storage.
 
 The same FastAPI service hosts `POST /api/daily/assist` and the earlier event API. See [the product guide](docs/product.md#daily-assistance-api) for the daily contract and [deployment instructions](docs/deployment.md) for origins, credentials, limits and infrastructure. The deployment guide's repair queue and Ultra escalation concern the retained event workspace; daily assistance uses one synchronous, bounded request.
 

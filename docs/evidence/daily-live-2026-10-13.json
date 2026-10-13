@@ -1,0 +1,1154 @@
+{
+  "date": "2026-10-13",
+  "scope": "Synthetic daily assistance on a local machine through Nebius Token Factory. Includes real local browser/API runs. Not evidence of a hosted Cloud Endpoint, Tavily, Ultra, Jobs or user impact.",
+  "providerOrigin": "https://api.tokenfactory.us-central1.nebius.com/v1",
+  "limits": {
+    "completionTokensPerCall": 1200,
+    "choices": 1,
+    "automaticRetries": 0
+  },
+  "spending": {
+    "modelCallsAttempted": 10,
+    "callsWithUnknownUsage": 1,
+    "knownUsageEstimateUSD": 0.00285738,
+    "pricingURL": "https://nebius.com/services/token-factory/models/nvidia-nemotron-models-inference",
+    "note": "Estimate from reported usage at published input/output prices, not a billing receipt. The timed-out call may incur an additional charge. No cloud resources created."
+  },
+  "manualReview": {
+    "initialSuper": "Relevant steps but nine minutes per slide spends the full 45-minute budget before additional review. Prompt revised.",
+    "firstBrowser": "Structural workflow passed; capture omitted five-slide count and intended audience. Source preservation and prompt changed.",
+    "finalBrowser": "Capture preserves 5-slide count, design-team audience, 45/20 minute estimates, original context and no invented project. Brief covers slides 1-4 plus decision slide 5, names intended audience, and does not add Jordan reply to the slide workflow. Review summaries are derived from actual counts.",
+    "limits": "Passing automated checks establishes only contracts and narrow fixture properties. These synthetic cases do not establish general model fidelity, factual accuracy, usefulness to users or a latency benchmark."
+  },
+  "evaluations": [
+    {
+      "artifactName": "daily-live-061920-70f783.json",
+      "sha256": "c13d2187516093f6b120fdfa40fd6c1337458ffd77502cea75b7b039fa7f6cda",
+      "report": {
+        "schemaVersion": 1,
+        "createdAt": "2026-10-13T06:19:20.241207+00:00",
+        "execution": "live",
+        "state": "complete",
+        "liveExecuted": true,
+        "selectedCase": "capture-explicit",
+        "scope": "Direct daily-assistance service evaluation using public synthetic fixtures; not proof of browser use, an HTTP API deployment or Nebius Cloud execution.",
+        "fixture": {
+          "name": "daily-synthetic-v1",
+          "planningDate": "2026-10-13",
+          "sha256": "d5015a5fc662c97158d244c43f8e3331b7905f622288fdbe26bfafd67382dd03"
+        },
+        "bounds": {
+          "modelCallsTotal": 1,
+          "modelCallsPerCase": 1,
+          "completionTokensPerCall": 1200,
+          "modelPayloadBytes": 12000,
+          "searchCallsTotal": 0,
+          "automaticRetries": 0,
+          "concurrency": 1
+        },
+        "requestedModels": {
+          "nano": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B",
+          "super": "nvidia/nemotron-3-super-120b-a12b"
+        },
+        "cases": [
+          {
+            "id": "capture-explicit",
+            "request": {
+              "action": "capture",
+              "text": "Two tasks: Draft the project update, 45 minutes, due tomorrow. Reply to Jordan, 20 minutes. No dependencies.",
+              "date": "2026-10-13",
+              "useWeb": false
+            },
+            "expectation": "Exactly two tasks; project update keeps 45 minutes and 2026-10-14 deadline; Jordan reply keeps 20 minutes; no invented dependencies or other deadline.",
+            "verdict": "pass",
+            "output": {
+              "mode": "live",
+              "summary": "Draft the project update",
+              "tasks": [
+                {
+                  "title": "Draft the project update",
+                  "minutes": 45,
+                  "priority": "normal",
+                  "project": "",
+                  "notes": "due tomorrow",
+                  "dueDate": "2026-10-14",
+                  "dependsOnIndices": []
+                },
+                {
+                  "title": "Reply to Jordan",
+                  "minutes": 20,
+                  "priority": "normal",
+                  "project": "",
+                  "notes": "",
+                  "dependsOnIndices": []
+                }
+              ],
+              "steps": [],
+              "sources": [],
+              "trace": [
+                {
+                  "id": "capture-task-drafts",
+                  "label": "Capture task drafts",
+                  "detail": "Structured response received; checked locally before use.",
+                  "status": "complete",
+                  "model": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B",
+                  "durationMs": 52652,
+                  "inputTokens": 377,
+                  "outputTokens": 638,
+                  "provider": "Nebius Token Factory"
+                },
+                {
+                  "id": "check-task-drafts",
+                  "label": "Check task drafts",
+                  "detail": "Checked duration bounds, real calendar dates, and dependency references and cycles. Drafts require review before being added.",
+                  "status": "complete",
+                  "provider": "Local validation"
+                }
+              ]
+            },
+            "modelCalls": [
+              {
+                "provider": "Nebius Token Factory",
+                "requestedModel": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B",
+                "returnedModel": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B",
+                "status": "complete",
+                "inputTokens": 377,
+                "outputTokens": 638,
+                "trace": {
+                  "id": "capture-task-drafts",
+                  "label": "Capture task drafts",
+                  "detail": "Structured response received; checked locally before use.",
+                  "status": "complete",
+                  "model": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B",
+                  "durationMs": 52652,
+                  "inputTokens": 377,
+                  "outputTokens": 638,
+                  "provider": "Nebius Token Factory"
+                },
+                "durationMs": 52653
+              }
+            ],
+            "searchCalls": [],
+            "checks": [
+              {
+                "id": "live-mode",
+                "passed": true,
+                "detail": "The result must identify itself as live assistance."
+              },
+              {
+                "id": "capture-shape",
+                "passed": true,
+                "detail": "Capture contains task drafts only, with no steps or invented research sources."
+              },
+              {
+                "id": "dependencies-valid",
+                "passed": true,
+                "detail": "Dependency indices must reference other tasks without duplicates or cycles."
+              },
+              {
+                "id": "preserved-estimates",
+                "passed": true,
+                "detail": "The update and Jordan reply retain their explicit 45- and 20-minute estimates."
+              },
+              {
+                "id": "relative-date",
+                "passed": true,
+                "detail": "Tomorrow is resolved against the fixture date; the other task gets no deadline."
+              },
+              {
+                "id": "no-invented-dependencies",
+                "passed": true,
+                "detail": "Neither task was given a prerequisite."
+              }
+            ],
+            "manualReview": "Assess usefulness, factual support and estimate realism separately; structural checks are not a user-quality study.",
+            "durationMs": 52654
+          }
+        ],
+        "summary": {
+          "verdicts": {
+            "pass": 1
+          },
+          "modelCallsAttempted": 1,
+          "searchCallsAttempted": 0,
+          "reportedInputTokens": 377,
+          "reportedOutputTokens": 638,
+          "callsWithUnknownUsage": 0,
+          "usageNote": "Only provider-reported usage is summed. Missing usage and failed calls are not assumed free. No currency cost is estimated. Direct evaluation does not consume the API's SQLite allowance."
+        }
+      }
+    },
+    {
+      "artifactName": "daily-live-062020-262910.json",
+      "sha256": "ace302d353a0153e348a429aeac6dcd813c65fcd51b6edf043c88e75c9ad3232",
+      "report": {
+        "schemaVersion": 1,
+        "createdAt": "2026-10-13T06:20:20.522452+00:00",
+        "execution": "live",
+        "state": "complete",
+        "liveExecuted": true,
+        "selectedCase": "task-breakdown",
+        "scope": "Direct daily-assistance service evaluation using public synthetic fixtures; not proof of browser use, an HTTP API deployment or Nebius Cloud execution.",
+        "fixture": {
+          "name": "daily-synthetic-v1",
+          "planningDate": "2026-10-13",
+          "sha256": "e2497eb0f8dd993da3c4c17f721c6403dbd828fb896fab859c4f25761729c28e"
+        },
+        "bounds": {
+          "modelCallsTotal": 1,
+          "modelCallsPerCase": 1,
+          "completionTokensPerCall": 1200,
+          "modelPayloadBytes": 12000,
+          "searchCallsTotal": 0,
+          "automaticRetries": 0,
+          "concurrency": 1
+        },
+        "requestedModels": {
+          "nano": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B",
+          "super": "nvidia/nemotron-3-super-120b-a12b"
+        },
+        "cases": [
+          {
+            "id": "task-breakdown",
+            "request": {
+              "action": "breakdown",
+              "text": "",
+              "date": "2026-10-13",
+              "task": {
+                "title": "Prepare a five-slide client project update",
+                "minutes": 45,
+                "notes": "Audience: a small design team. Use an existing outline and end with one decision."
+              },
+              "useWeb": false
+            },
+            "expectation": "Three to six distinct task-relevant starting steps; no task insertion, web search or external citations.",
+            "verdict": "pass",
+            "output": {
+              "mode": "live",
+              "summary": "Breakdown of preparing a five-slide client project update for a small design team within 45 minutes.",
+              "tasks": [],
+              "steps": [
+                {
+                  "title": "Review existing outline",
+                  "detail": "Read the supplied outline, extract the main messages, and decide what each of the five slides should convey.",
+                  "sourceUrls": []
+                },
+                {
+                  "title": "Allocate time per slide",
+                  "detail": "Plan roughly 9 minutes per slide (including content creation and quick visual touches) leaving a few minutes for final review.",
+                  "sourceUrls": []
+                },
+                {
+                  "title": "Create slides 1-4 content",
+                  "detail": "For each of the first four slides, write a concise headline, 2-3 bullet points, and note any needed visual (chart, image, icon). Use the outline as the source.",
+                  "sourceUrls": []
+                },
+                {
+                  "title": "Design slide 5 – decision slide",
+                  "detail": "Formulate the single decision recommendation, place it prominently, and add a brief rationale or next steps.",
+                  "sourceUrls": []
+                },
+                {
+                  "title": "Final review and polish",
+                  "detail": "Check consistency of fonts, colors, and layout; ensure the deck flows logically and ends with the decision; make any last tweaks.",
+                  "sourceUrls": []
+                }
+              ],
+              "sources": [],
+              "trace": [
+                {
+                  "id": "build-task-starting-brief",
+                  "label": "Build task starting brief",
+                  "detail": "Structured response received; checked locally before use.",
+                  "status": "complete",
+                  "model": "nvidia/nemotron-3-super-120b-a12b",
+                  "durationMs": 4444,
+                  "inputTokens": 343,
+                  "outputTokens": 706,
+                  "provider": "Nebius Token Factory"
+                },
+                {
+                  "id": "check-brief",
+                  "label": "Check brief sources",
+                  "detail": "No web search was used. Steps are planning suggestions; current facts are not verified.",
+                  "status": "complete",
+                  "provider": "Local validation"
+                }
+              ]
+            },
+            "modelCalls": [
+              {
+                "provider": "Nebius Token Factory",
+                "requestedModel": "nvidia/nemotron-3-super-120b-a12b",
+                "returnedModel": "nvidia/nemotron-3-super-120b-a12b",
+                "status": "complete",
+                "inputTokens": 343,
+                "outputTokens": 706,
+                "trace": {
+                  "id": "build-task-starting-brief",
+                  "label": "Build task starting brief",
+                  "detail": "Structured response received; checked locally before use.",
+                  "status": "complete",
+                  "model": "nvidia/nemotron-3-super-120b-a12b",
+                  "durationMs": 4444,
+                  "inputTokens": 343,
+                  "outputTokens": 706,
+                  "provider": "Nebius Token Factory"
+                },
+                "durationMs": 4445
+              }
+            ],
+            "searchCalls": [],
+            "checks": [
+              {
+                "id": "live-mode",
+                "passed": true,
+                "detail": "The result must identify itself as live assistance."
+              },
+              {
+                "id": "brief-shape",
+                "passed": true,
+                "detail": "A brief contains three to six steps and does not insert tasks."
+              },
+              {
+                "id": "distinct-steps",
+                "passed": true,
+                "detail": "Step titles are distinct."
+              },
+              {
+                "id": "source-links",
+                "passed": true,
+                "detail": "Every cited URL belongs to the returned source set; no hidden unverified prose links."
+              },
+              {
+                "id": "task-relevance",
+                "passed": true,
+                "detail": "At least one step refers to the task context; this is a narrow relevance check, not a quality score."
+              },
+              {
+                "id": "no-search",
+                "passed": true,
+                "detail": "The breakdown case did not request research."
+              }
+            ],
+            "manualReview": "Assess usefulness, factual support and estimate realism separately; structural checks are not a user-quality study.",
+            "durationMs": 4445
+          }
+        ],
+        "summary": {
+          "verdicts": {
+            "pass": 1
+          },
+          "modelCallsAttempted": 1,
+          "searchCallsAttempted": 0,
+          "reportedInputTokens": 343,
+          "reportedOutputTokens": 706,
+          "callsWithUnknownUsage": 0,
+          "usageNote": "Only provider-reported usage is summed. Missing usage and failed calls are not assumed free. No currency cost is estimated. Direct evaluation does not consume the API's SQLite allowance."
+        }
+      }
+    },
+    {
+      "artifactName": "daily-live-062101-c4d16f.json",
+      "sha256": "6c50eab6dd9a17b809d7fea8d49e7b062e70aedf9e1349b90daed5a28a155f5c",
+      "report": {
+        "schemaVersion": 1,
+        "createdAt": "2026-10-13T06:21:01.025497+00:00",
+        "execution": "live",
+        "state": "complete",
+        "liveExecuted": true,
+        "selectedCase": "capture-estimated",
+        "scope": "Direct daily-assistance service evaluation using public synthetic fixtures; not proof of browser use, an HTTP API deployment or Nebius Cloud execution.",
+        "fixture": {
+          "name": "daily-synthetic-v1",
+          "planningDate": "2026-10-13",
+          "sha256": "64062bd39763b64e91b058bf547183eacf865c316bde846b49347ff9be4fd31b"
+        },
+        "bounds": {
+          "modelCallsTotal": 1,
+          "modelCallsPerCase": 1,
+          "completionTokensPerCall": 1200,
+          "modelPayloadBytes": 12000,
+          "searchCallsTotal": 0,
+          "automaticRetries": 0,
+          "concurrency": 1
+        },
+        "requestedModels": {
+          "nano": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B",
+          "super": "nvidia/nemotron-3-super-120b-a12b"
+        },
+        "cases": [
+          {
+            "id": "capture-estimated",
+            "request": {
+              "action": "capture",
+              "text": "Outline a portfolio case study. I have not estimated the duration; suggest an estimate for me to review. No deadline or dependencies.",
+              "date": "2026-10-13",
+              "useWeb": false
+            },
+            "expectation": "One task; a clearly labeled duration estimate; no invented deadline or dependencies.",
+            "verdict": "error",
+            "output": null,
+            "modelCalls": [
+              {
+                "provider": "Nebius Token Factory",
+                "requestedModel": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B",
+                "returnedModel": null,
+                "status": "error",
+                "inputTokens": null,
+                "outputTokens": null,
+                "error": {
+                  "code": "provider_timeout",
+                  "message": "Provider timed out. No automatic retry was made."
+                },
+                "durationMs": 75206
+              }
+            ],
+            "searchCalls": [],
+            "error": {
+              "code": "provider_timeout",
+              "message": "Provider timed out. No automatic retry was made."
+            },
+            "durationMs": 75206
+          }
+        ],
+        "summary": {
+          "verdicts": {
+            "error": 1
+          },
+          "modelCallsAttempted": 1,
+          "searchCallsAttempted": 0,
+          "reportedInputTokens": 0,
+          "reportedOutputTokens": 0,
+          "callsWithUnknownUsage": 1,
+          "usageNote": "Only provider-reported usage is summed. Missing usage and failed calls are not assumed free. No currency cost is estimated. Direct evaluation does not consume the API's SQLite allowance."
+        }
+      }
+    },
+    {
+      "artifactName": "daily-live-062233-d0915c.json",
+      "sha256": "d069df636401e7de2445df5d9fe4a41211a2671355fcbf6c58dbd892c3198144",
+      "report": {
+        "schemaVersion": 1,
+        "createdAt": "2026-10-13T06:22:33.024114+00:00",
+        "execution": "live",
+        "state": "complete",
+        "liveExecuted": true,
+        "selectedCase": "capture-explicit",
+        "scope": "Direct daily-assistance service evaluation using public synthetic fixtures; not proof of browser use, an HTTP API deployment or Nebius Cloud execution.",
+        "fixture": {
+          "name": "daily-synthetic-v1",
+          "planningDate": "2026-10-13",
+          "sha256": "d5015a5fc662c97158d244c43f8e3331b7905f622288fdbe26bfafd67382dd03"
+        },
+        "bounds": {
+          "modelCallsTotal": 1,
+          "modelCallsPerCase": 1,
+          "completionTokensPerCall": 1200,
+          "modelPayloadBytes": 12000,
+          "searchCallsTotal": 0,
+          "automaticRetries": 0,
+          "concurrency": 1
+        },
+        "requestedModels": {
+          "nano": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B",
+          "super": "nvidia/nemotron-3-super-120b-a12b"
+        },
+        "cases": [
+          {
+            "id": "capture-explicit",
+            "request": {
+              "action": "capture",
+              "text": "Two tasks: Draft the project update, 45 minutes, due tomorrow. Reply to Jordan, 20 minutes. No dependencies.",
+              "date": "2026-10-13",
+              "useWeb": false
+            },
+            "expectation": "Exactly two tasks; project update keeps 45 minutes and 2026-10-14 deadline; Jordan reply keeps 20 minutes; no invented dependencies or other deadline.",
+            "verdict": "pass",
+            "output": {
+              "mode": "live",
+              "summary": "Review and schedule the drafted tasks for tomorrow.",
+              "tasks": [
+                {
+                  "title": "Draft the project update",
+                  "minutes": 45,
+                  "priority": "normal",
+                  "project": "",
+                  "notes": "Due tomorrow.",
+                  "dueDate": "2026-10-14",
+                  "dependsOnIndices": []
+                },
+                {
+                  "title": "Reply to Jordan",
+                  "minutes": 20,
+                  "priority": "normal",
+                  "project": "",
+                  "notes": "No dependencies.",
+                  "dependsOnIndices": []
+                }
+              ],
+              "steps": [],
+              "sources": [],
+              "trace": [
+                {
+                  "id": "capture-task-drafts",
+                  "label": "Capture task drafts",
+                  "detail": "Structured response received; checked locally before use.",
+                  "status": "complete",
+                  "model": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B",
+                  "durationMs": 21309,
+                  "inputTokens": 377,
+                  "outputTokens": 169,
+                  "provider": "Nebius Token Factory"
+                },
+                {
+                  "id": "check-task-drafts",
+                  "label": "Check task drafts",
+                  "detail": "Checked duration bounds, real calendar dates, and dependency references and cycles. Drafts require review before being added.",
+                  "status": "complete",
+                  "provider": "Local validation"
+                }
+              ]
+            },
+            "modelCalls": [
+              {
+                "provider": "Nebius Token Factory",
+                "requestedModel": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B",
+                "returnedModel": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B",
+                "status": "complete",
+                "inputTokens": 377,
+                "outputTokens": 169,
+                "trace": {
+                  "id": "capture-task-drafts",
+                  "label": "Capture task drafts",
+                  "detail": "Structured response received; checked locally before use.",
+                  "status": "complete",
+                  "model": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B",
+                  "durationMs": 21309,
+                  "inputTokens": 377,
+                  "outputTokens": 169,
+                  "provider": "Nebius Token Factory"
+                },
+                "durationMs": 21325
+              }
+            ],
+            "searchCalls": [],
+            "checks": [
+              {
+                "id": "live-mode",
+                "passed": true,
+                "detail": "The result must identify itself as live assistance."
+              },
+              {
+                "id": "capture-shape",
+                "passed": true,
+                "detail": "Capture contains task drafts only, with no steps or invented research sources."
+              },
+              {
+                "id": "dependencies-valid",
+                "passed": true,
+                "detail": "Dependency indices must reference other tasks without duplicates or cycles."
+              },
+              {
+                "id": "preserved-estimates",
+                "passed": true,
+                "detail": "The update and Jordan reply retain their explicit 45- and 20-minute estimates."
+              },
+              {
+                "id": "relative-date",
+                "passed": true,
+                "detail": "Tomorrow is resolved against the fixture date; the other task gets no deadline."
+              },
+              {
+                "id": "no-invented-dependencies",
+                "passed": true,
+                "detail": "Neither task was given a prerequisite."
+              }
+            ],
+            "manualReview": "Assess usefulness, factual support and estimate realism separately; structural checks are not a user-quality study.",
+            "durationMs": 21325
+          }
+        ],
+        "summary": {
+          "verdicts": {
+            "pass": 1
+          },
+          "modelCallsAttempted": 1,
+          "searchCallsAttempted": 0,
+          "reportedInputTokens": 377,
+          "reportedOutputTokens": 169,
+          "callsWithUnknownUsage": 0,
+          "usageNote": "Only provider-reported usage is summed. Missing usage and failed calls are not assumed free. No currency cost is estimated. Direct evaluation does not consume the API's SQLite allowance."
+        }
+      }
+    },
+    {
+      "artifactName": "daily-live-062324-b0ae1d.json",
+      "sha256": "641e40b1001a8dfe3b4d2faee0562c947e2ce4030504051585354ab7dc0b4d2f",
+      "report": {
+        "schemaVersion": 1,
+        "createdAt": "2026-10-13T06:23:24.447549+00:00",
+        "execution": "live",
+        "state": "complete",
+        "liveExecuted": true,
+        "selectedCase": "capture-estimated",
+        "scope": "Direct daily-assistance service evaluation using public synthetic fixtures; not proof of browser use, an HTTP API deployment or Nebius Cloud execution.",
+        "fixture": {
+          "name": "daily-synthetic-v1",
+          "planningDate": "2026-10-13",
+          "sha256": "64062bd39763b64e91b058bf547183eacf865c316bde846b49347ff9be4fd31b"
+        },
+        "bounds": {
+          "modelCallsTotal": 1,
+          "modelCallsPerCase": 1,
+          "completionTokensPerCall": 1200,
+          "modelPayloadBytes": 12000,
+          "searchCallsTotal": 0,
+          "automaticRetries": 0,
+          "concurrency": 1
+        },
+        "requestedModels": {
+          "nano": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B",
+          "super": "nvidia/nemotron-3-super-120b-a12b"
+        },
+        "cases": [
+          {
+            "id": "capture-estimated",
+            "request": {
+              "action": "capture",
+              "text": "Outline a portfolio case study. I have not estimated the duration; suggest an estimate for me to review. No deadline or dependencies.",
+              "date": "2026-10-13",
+              "useWeb": false
+            },
+            "expectation": "One task; a clearly labeled duration estimate; no invented deadline or dependencies.",
+            "verdict": "pass",
+            "output": {
+              "mode": "live",
+              "summary": "Please review the suggested task duration.",
+              "tasks": [
+                {
+                  "title": "Outline portfolio case study",
+                  "minutes": 60,
+                  "priority": "normal",
+                  "project": "",
+                  "notes": "Duration estimate: 60 minutes. Confirm before adding. User did not provide an estimate; suggested 60 minutes as a conservative estimate for review.",
+                  "dependsOnIndices": []
+                }
+              ],
+              "steps": [],
+              "sources": [],
+              "trace": [
+                {
+                  "id": "capture-task-drafts",
+                  "label": "Capture task drafts",
+                  "detail": "Structured response received; checked locally before use.",
+                  "status": "complete",
+                  "model": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B",
+                  "durationMs": 2617,
+                  "inputTokens": 375,
+                  "outputTokens": 105,
+                  "provider": "Nebius Token Factory"
+                },
+                {
+                  "id": "check-task-drafts",
+                  "label": "Check task drafts",
+                  "detail": "Checked duration bounds, real calendar dates, and dependency references and cycles. Drafts require review before being added.",
+                  "status": "complete",
+                  "provider": "Local validation"
+                }
+              ]
+            },
+            "modelCalls": [
+              {
+                "provider": "Nebius Token Factory",
+                "requestedModel": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B",
+                "returnedModel": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B",
+                "status": "complete",
+                "inputTokens": 375,
+                "outputTokens": 105,
+                "trace": {
+                  "id": "capture-task-drafts",
+                  "label": "Capture task drafts",
+                  "detail": "Structured response received; checked locally before use.",
+                  "status": "complete",
+                  "model": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B",
+                  "durationMs": 2617,
+                  "inputTokens": 375,
+                  "outputTokens": 105,
+                  "provider": "Nebius Token Factory"
+                },
+                "durationMs": 2618
+              }
+            ],
+            "searchCalls": [],
+            "checks": [
+              {
+                "id": "live-mode",
+                "passed": true,
+                "detail": "The result must identify itself as live assistance."
+              },
+              {
+                "id": "capture-shape",
+                "passed": true,
+                "detail": "Capture contains task drafts only, with no steps or invented research sources."
+              },
+              {
+                "id": "dependencies-valid",
+                "passed": true,
+                "detail": "Dependency indices must reference other tasks without duplicates or cycles."
+              },
+              {
+                "id": "reviewable-estimate",
+                "passed": true,
+                "detail": "The single missing duration must be visibly labeled as an estimate."
+              },
+              {
+                "id": "no-invented-constraints",
+                "passed": true,
+                "detail": "No deadline or dependency was supplied."
+              }
+            ],
+            "manualReview": "Assess usefulness, factual support and estimate realism separately; structural checks are not a user-quality study.",
+            "durationMs": 2618
+          }
+        ],
+        "summary": {
+          "verdicts": {
+            "pass": 1
+          },
+          "modelCallsAttempted": 1,
+          "searchCallsAttempted": 0,
+          "reportedInputTokens": 375,
+          "reportedOutputTokens": 105,
+          "callsWithUnknownUsage": 0,
+          "usageNote": "Only provider-reported usage is summed. Missing usage and failed calls are not assumed free. No currency cost is estimated. Direct evaluation does not consume the API's SQLite allowance."
+        }
+      }
+    },
+    {
+      "artifactName": "daily-live-062353-58b3c5.json",
+      "sha256": "37b0a615be841f6be8b9dd173681b2e3401b336ef5ea3e31e9a7ab069b667713",
+      "report": {
+        "schemaVersion": 1,
+        "createdAt": "2026-10-13T06:23:53.956646+00:00",
+        "execution": "live",
+        "state": "complete",
+        "liveExecuted": true,
+        "selectedCase": "capture-dependencies",
+        "scope": "Direct daily-assistance service evaluation using public synthetic fixtures; not proof of browser use, an HTTP API deployment or Nebius Cloud execution.",
+        "fixture": {
+          "name": "daily-synthetic-v1",
+          "planningDate": "2026-10-13",
+          "sha256": "e578442afec1cce4a4075af427bd82c27463f1b5058e19d1bd4a6b58f72273c7"
+        },
+        "bounds": {
+          "modelCallsTotal": 1,
+          "modelCallsPerCase": 1,
+          "completionTokensPerCall": 1200,
+          "modelPayloadBytes": 12000,
+          "searchCallsTotal": 0,
+          "automaticRetries": 0,
+          "concurrency": 1
+        },
+        "requestedModels": {
+          "nano": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B",
+          "super": "nvidia/nemotron-3-super-120b-a12b"
+        },
+        "cases": [
+          {
+            "id": "capture-dependencies",
+            "request": {
+              "action": "capture",
+              "text": "Three tasks: \"Outline the article\" takes 20 minutes. \"Write the article\" takes 45 minutes and must follow the outline. \"Review the article\" takes 15 minutes and must follow writing. No deadlines.",
+              "date": "2026-10-13",
+              "useWeb": false
+            },
+            "expectation": "Exactly three tasks with 20/45/15 minutes; outline before writing before review; no invented deadline.",
+            "verdict": "pass",
+            "output": {
+              "mode": "live",
+              "summary": "Review and extract tasks from user note",
+              "tasks": [
+                {
+                  "title": "Outline the article",
+                  "minutes": 20,
+                  "priority": "normal",
+                  "project": "",
+                  "notes": "Takes 20 minutes",
+                  "dependsOnIndices": []
+                },
+                {
+                  "title": "Write the article",
+                  "minutes": 45,
+                  "priority": "normal",
+                  "project": "",
+                  "notes": "Must follow the outline",
+                  "dependsOnIndices": [
+                    0
+                  ]
+                },
+                {
+                  "title": "Review the article",
+                  "minutes": 15,
+                  "priority": "normal",
+                  "project": "",
+                  "notes": "Must follow writing",
+                  "dependsOnIndices": [
+                    1
+                  ]
+                }
+              ],
+              "steps": [],
+              "sources": [],
+              "trace": [
+                {
+                  "id": "capture-task-drafts",
+                  "label": "Capture task drafts",
+                  "detail": "Structured response received; checked locally before use.",
+                  "status": "complete",
+                  "model": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B",
+                  "durationMs": 3546,
+                  "inputTokens": 398,
+                  "outputTokens": 231,
+                  "provider": "Nebius Token Factory"
+                },
+                {
+                  "id": "check-task-drafts",
+                  "label": "Check task drafts",
+                  "detail": "Checked duration bounds, real calendar dates, and dependency references and cycles. Drafts require review before being added.",
+                  "status": "complete",
+                  "provider": "Local validation"
+                }
+              ]
+            },
+            "modelCalls": [
+              {
+                "provider": "Nebius Token Factory",
+                "requestedModel": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B",
+                "returnedModel": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B",
+                "status": "complete",
+                "inputTokens": 398,
+                "outputTokens": 231,
+                "trace": {
+                  "id": "capture-task-drafts",
+                  "label": "Capture task drafts",
+                  "detail": "Structured response received; checked locally before use.",
+                  "status": "complete",
+                  "model": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B",
+                  "durationMs": 3546,
+                  "inputTokens": 398,
+                  "outputTokens": 231,
+                  "provider": "Nebius Token Factory"
+                },
+                "durationMs": 3546
+              }
+            ],
+            "searchCalls": [],
+            "checks": [
+              {
+                "id": "live-mode",
+                "passed": true,
+                "detail": "The result must identify itself as live assistance."
+              },
+              {
+                "id": "capture-shape",
+                "passed": true,
+                "detail": "Capture contains task drafts only, with no steps or invented research sources."
+              },
+              {
+                "id": "dependencies-valid",
+                "passed": true,
+                "detail": "Dependency indices must reference other tasks without duplicates or cycles."
+              },
+              {
+                "id": "preserved-estimates",
+                "passed": true,
+                "detail": "The three named tasks retain their 20/45/15-minute estimates."
+              },
+              {
+                "id": "explicit-chain",
+                "passed": true,
+                "detail": "The writing depends on the outline and the review depends on writing, regardless of response order."
+              },
+              {
+                "id": "no-invented-deadlines",
+                "passed": true,
+                "detail": "No dates were supplied for this dependency chain."
+              }
+            ],
+            "manualReview": "Assess usefulness, factual support and estimate realism separately; structural checks are not a user-quality study.",
+            "durationMs": 3547
+          }
+        ],
+        "summary": {
+          "verdicts": {
+            "pass": 1
+          },
+          "modelCallsAttempted": 1,
+          "searchCallsAttempted": 0,
+          "reportedInputTokens": 398,
+          "reportedOutputTokens": 231,
+          "callsWithUnknownUsage": 0,
+          "usageNote": "Only provider-reported usage is summed. Missing usage and failed calls are not assumed free. No currency cost is estimated. Direct evaluation does not consume the API's SQLite allowance."
+        }
+      }
+    }
+  ],
+  "browserRuns": [
+    {
+      "revision": "before-context-fix",
+      "report": {
+        "scope": "Real local browser → authenticated local HTTP API → Nebius Token Factory. Synthetic tasks only. Not a cloud deployment.",
+        "createdAt": "2026-10-13T06:24:13.525Z",
+        "calls": [
+          {
+            "status": 200,
+            "durationMs": 2793,
+            "output": {
+              "mode": "live",
+              "summary": "Review and finalize client project update slides",
+              "tasks": [
+                {
+                  "title": "Prepare client project update slides",
+                  "minutes": 45,
+                  "priority": "normal",
+                  "project": "client project update",
+                  "notes": "Use existing outline and end with one decision",
+                  "dependsOnIndices": []
+                },
+                {
+                  "title": "Reply to Jordan",
+                  "minutes": 20,
+                  "priority": "normal",
+                  "project": "",
+                  "notes": "No deadlines or dependencies",
+                  "dependsOnIndices": []
+                }
+              ],
+              "steps": [],
+              "sources": [],
+              "trace": [
+                {
+                  "id": "capture-task-drafts",
+                  "label": "Capture task drafts",
+                  "detail": "Structured response received; checked locally before use.",
+                  "status": "complete",
+                  "model": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B",
+                  "durationMs": 2744,
+                  "inputTokens": 396,
+                  "outputTokens": 174,
+                  "provider": "Nebius Token Factory"
+                },
+                {
+                  "id": "check-task-drafts",
+                  "label": "Check task drafts",
+                  "detail": "Checked duration bounds, real calendar dates, and dependency references and cycles. Drafts require review before being added.",
+                  "status": "complete",
+                  "provider": "Local validation"
+                }
+              ]
+            }
+          },
+          {
+            "status": 200,
+            "durationMs": 4387,
+            "output": {
+              "mode": "live",
+              "summary": "Not provided by user; focusing on workflow.",
+              "tasks": [],
+              "steps": [
+                {
+                  "title": "Preparation",
+                  "detail": "Set up slide template, verify access to existing outline and any needed files.",
+                  "sourceUrls": []
+                },
+                {
+                  "title": "Gather content",
+                  "detail": "Read the existing outline and collect any updated metrics, status notes, or graphics to insert.",
+                  "sourceUrls": []
+                },
+                {
+                  "title": "Build skeleton",
+                  "detail": "Create slides for title, agenda, progress summary, risks/issues, next steps using the outline structure.",
+                  "sourceUrls": []
+                },
+                {
+                  "title": "Populate slides",
+                  "detail": "Fill each slide with concise bullet points, charts, or images from the gathered content.",
+                  "sourceUrls": []
+                },
+                {
+                  "title": "Decision slide",
+                  "detail": "Add a final slide that states the single decision required from the client with brief rationale.",
+                  "sourceUrls": []
+                },
+                {
+                  "title": "Review",
+                  "detail": "Run through the deck, check clarity, spelling, and that it ends with the decision; make final tweaks.",
+                  "sourceUrls": []
+                }
+              ],
+              "sources": [],
+              "trace": [
+                {
+                  "id": "build-task-starting-brief",
+                  "label": "Build task starting brief",
+                  "detail": "Structured response received; checked locally before use.",
+                  "status": "complete",
+                  "model": "nvidia/nemotron-3-super-120b-a12b",
+                  "durationMs": 4306,
+                  "inputTokens": 488,
+                  "outputTokens": 785,
+                  "provider": "Nebius Token Factory"
+                },
+                {
+                  "id": "check-brief",
+                  "label": "Check brief sources",
+                  "detail": "No web search was used. Steps are planning suggestions; current facts are not verified.",
+                  "status": "complete",
+                  "provider": "Local validation"
+                }
+              ]
+            }
+          }
+        ],
+        "checks": {
+          "captureRequiresReview": true,
+          "connectionNotPersisted": true,
+          "tasksPersistedButNotAutoCompleted": true,
+          "noBrowserErrors": true
+        },
+        "outcome": "pass"
+      }
+    },
+    {
+      "revision": "after-context-fix",
+      "report": {
+        "scope": "Real local browser → authenticated local HTTP API → Nebius Token Factory. Synthetic tasks only. Not a cloud deployment.",
+        "createdAt": "2026-10-13T06:28:25.943Z",
+        "calls": [
+          {
+            "status": 200,
+            "durationMs": 2809,
+            "output": {
+              "mode": "live",
+              "summary": "2 task drafts. Review the titles, estimates, and details before adding.",
+              "tasks": [
+                {
+                  "title": "Prepare 5-slide client project update for small design team",
+                  "minutes": 45,
+                  "priority": "normal",
+                  "project": "",
+                  "notes": "Use existing outline and end with one decision\n\nOriginal capture (full text; may include other tasks):\nPrepare a five-slide client project update, 45 minutes. Audience: a small design team. Use an existing outline and end with one decision. Also reply to Jordan, 20 minutes. No deadlines or dependencies.",
+                  "dependsOnIndices": []
+                },
+                {
+                  "title": "Reply to Jordan",
+                  "minutes": 20,
+                  "priority": "normal",
+                  "project": "",
+                  "notes": "Original capture (full text; may include other tasks):\nPrepare a five-slide client project update, 45 minutes. Audience: a small design team. Use an existing outline and end with one decision. Also reply to Jordan, 20 minutes. No deadlines or dependencies.",
+                  "dependsOnIndices": []
+                }
+              ],
+              "steps": [],
+              "sources": [],
+              "trace": [
+                {
+                  "id": "capture-task-drafts",
+                  "label": "Capture task drafts",
+                  "detail": "Structured response received; checked locally before use.",
+                  "status": "complete",
+                  "model": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B",
+                  "durationMs": 2700,
+                  "inputTokens": 476,
+                  "outputTokens": 169,
+                  "provider": "Nebius Token Factory"
+                },
+                {
+                  "id": "check-task-drafts",
+                  "label": "Check task drafts",
+                  "detail": "Checked duration bounds, real calendar dates, and dependency references and cycles. Drafts require review before being added.",
+                  "status": "complete",
+                  "provider": "Local validation"
+                }
+              ]
+            }
+          },
+          {
+            "status": 200,
+            "durationMs": 3510,
+            "output": {
+              "mode": "live",
+              "summary": "5 proposed steps. Review and adjust them before starting.",
+              "tasks": [],
+              "steps": [
+                {
+                  "title": "Review existing outline and gather any needed content",
+                  "detail": "Open the outline, confirm slide headings, note any missing data to pull from memory or quick notes.",
+                  "sourceUrls": []
+                },
+                {
+                  "title": "Draft slides 1‑4 (content and basic layout)",
+                  "detail": "Create four slides following the outline: project status, progress highlights, upcoming milestones, and any risks/issues.",
+                  "sourceUrls": []
+                },
+                {
+                  "title": "Draft slide 5 – decision slide",
+                  "detail": "Formulate the single decision requested, place it clearly on the final slide with supporting rationale.",
+                  "sourceUrls": []
+                },
+                {
+                  "title": "Apply visual formatting and ensure consistency",
+                  "detail": "Adjust fonts, colors, alignment, and add simple graphics to match the team’s template; keep design clean for a small design team audience.",
+                  "sourceUrls": []
+                },
+                {
+                  "title": "Final review and polish",
+                  "detail": "Read through all slides, check spelling, verify that the decision slide is last, and make any last tweaks before declaring the deck complete.",
+                  "sourceUrls": []
+                }
+              ],
+              "sources": [],
+              "trace": [
+                {
+                  "id": "build-task-starting-brief",
+                  "label": "Build task starting brief",
+                  "detail": "Structured response received; checked locally before use.",
+                  "status": "complete",
+                  "model": "nvidia/nemotron-3-super-120b-a12b",
+                  "durationMs": 3416,
+                  "inputTokens": 653,
+                  "outputTokens": 633,
+                  "provider": "Nebius Token Factory"
+                },
+                {
+                  "id": "check-brief",
+                  "label": "Check brief sources",
+                  "detail": "No web search was used. Steps are planning suggestions; current facts are not verified.",
+                  "status": "complete",
+                  "provider": "Local validation"
+                }
+              ]
+            }
+          }
+        ],
+        "checks": {
+          "captureRequiresReview": true,
+          "connectionNotPersisted": true,
+          "tasksPersistedButNotAutoCompleted": true,
+          "noBrowserErrors": true
+        },
+        "outcome": "pass"
+      }
+    }
+  ],
+  "runtimeSourceSHA256": {
+    "server/config.py": "2da9781d94350fc1cf6a4fa47c5d6cc4dc208a6ad534a9468099aa332f5bf2a4",
+    "server/daily.py": "aee91a38c84df0e3ed46ba5b64588296201805831945c93e9668b3d357d787c9",
+    "server/providers.py": "d9ee45903de65f44ed2c73f90b1bdf5b5c20daf01d29f86cc3821058247bf7a7",
+    "server/app.py": "c8b32a541fdb61c5fe105f60fe5801a3e891fdf347097fb97945504d1c5bc4c0",
+    "src/daily/assist.ts": "4892300fdd36b1f1c0848b2690eee729cd2554a873cfa00c1383708ac21ff123",
+    "src/daily/DailyApp.tsx": "2c4e91e979228702da9cd06fa4bcd51c5fb571b901bb7c77cbe12f9c2f08c774"
+  }
+}

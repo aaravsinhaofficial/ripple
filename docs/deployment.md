@@ -1,6 +1,6 @@
 # Run Ripple and connect the real services
 
-GitHub Pages serves the daily workspace and local rule-based planner. Task entry, planning, recovery, focus and exports need no account or backend. All provider credentials and optional live assistance requests belong to the private API. The earlier event workspace remains at `?workspace=events` and uses the same service. These instructions prepare a real deployment; no Nebius resource or provider call has been run with real credentials yet.
+GitHub Pages serves the daily workspace and local rule-based planner. Task entry, planning, recovery, focus and exports need no account or backend. All provider credentials and optional live assistance requests belong to the private API. The earlier event workspace remains at `?workspace=events` and uses the same service. Real Nano capture and Super task briefs have been verified through Token Factory, including a local browser and authenticated HTTP API. A hosted Nebius Endpoint and Tavily search have not yet been verified. These instructions prepare that deployment.
 
 ## 1. Run the private API locally
 
@@ -50,7 +50,7 @@ Requests may include `confirmedChange` with `kind`, `targetId`, `minutes`, and `
 
 ## 2. Create accounts and redeem credits
 
-1. Join the [Nebius Builder Program](https://dev.nebius.com/) and redeem any current offers. Create a [Token Factory](https://tokenfactory.nebius.com/) account and API key. Promo codes can be applied without a card; grants are not guaranteed by this project. [Billing guide](https://docs.tokenfactory.nebius.com/other-capabilities/billing)
+1. Join the [Nebius Builder Program](https://dev.nebius.com/) and redeem any current offers. Create a [Token Factory](https://tokenfactory.nebius.com/) account and API key. Check the current onboarding and billing terms before redeeming credits. Credits are not a hard spending cap: card billing can continue beyond a positive balance. Grants are not guaranteed by this project. [Billing guide](https://docs.tokenfactory.nebius.com/other-capabilities/billing-new)
 2. Optional: create a [Tavily](https://app.tavily.com/) account. Its free plan documents 1,000 credits/month; keep pay-as-you-go disabled if spending is not wanted. [Tavily pricing](https://docs.tavily.com/documentation/api-credits)
 3. For deployment, create a [Nebius AI Cloud](https://console.nebius.com/) project and configure its CLI, region, subnet and quota. Token Factory credentials alone do not create an AI Cloud project. [CLI installation](https://docs.nebius.com/cli/install)
 
@@ -72,7 +72,9 @@ Generate an organizer token with `python -c 'import secrets; print(secrets.token
 
 For the daily workspace, start with a short capture and a selected-task brief as described above. For the earlier event workspace, use one sample repair with **Describe in words**. That event path should show Nano and Super trace entries with actual returned model identity and usage when supplied, plus independently passed constraint checks. Its guided path skips Nano and shows an organizer-confirmed change followed by Super. Authentication failures, exhausted credits, malformed output and timeouts remain visible errors in both workspaces; the server never replaces them with rule-based output.
 
-For repeatable event-repair evidence, the [evaluation command](live-evaluation.md) prepares five event cases without making calls by default. Its explicit `--run-live` option consumes credits and saves model identity, usage, latency, independent checks, and failures to a private local artifact. It does not evaluate daily capture or task briefs; record those requests and responses separately.
+For daily capture and brief evidence, use the [bounded daily evaluation](daily-live-evaluation.md), which makes zero calls by default and supports selecting one paid case at a time.
+
+For repeatable event-repair evidence, the [evaluation command](live-evaluation.md) prepares five event cases without making calls by default. Its explicit `--run-live` option consumes credits and saves model identity, usage, latency, independent checks, and failures to a private local artifact. It does not evaluate daily capture or task briefs; use the separate daily command for those.
 
 After checking credits/model access, the event workspace can use `RIPPLE_ENABLE_ULTRA=true` to permit one Ultra correction when every Super candidate fails validation. This setting does not add an Ultra call to daily assistance. Setting `RIPPLE_ENABLE_TAVILY=true` with the private `TAVILY_API_KEY` enables explicitly requested daily research and the event API's optional venue search for an infeasible room disruption. Confirm Ultra JSON-schema support with a small real event request before relying on it for a judged demo. [Model/API research](platform-research.md)
 
@@ -80,7 +82,9 @@ Daily assistance makes at most one Nano **or** Super call and one optional basic
 
 ## 4. Deploy the API to a Nebius Endpoint
 
-First review current regional Compute and disk pricing. Serverless Endpoints are billed while running, not only while answering requests. The documented CPU preset is sufficient because NVIDIA inference runs in Token Factory. [Pricing](https://docs.nebius.com/serverless/pricing-quotas)
+First review current regional Compute and disk pricing. Serverless Endpoints are billed while running, not only while answering requests. The template uses the documented `cpu-d3 / 2vcpu-8gb` preset because NVIDIA inference runs in Token Factory. With its 100 GiB Network SSD, October 13, 2026 list prices imply roughly $1.82 per day before inference, taxes or other resources. Confirm account quotas and current rates; Token Factory balances are not assumed transferable to AI Cloud. [Compute and disk prices](https://docs.nebius.com/compute/resources/pricing) [Pricing](https://docs.nebius.com/serverless/pricing-quotas)
+
+The manually dispatched **Build backend container** GitHub Action builds and checks a Linux AMD64 image without provider access, then saves it with a checksum as a two-day artifact. Download it and use the included `LOAD.txt` instructions if Docker is unavailable on the development machine. The check runs with container networking disabled and verifies demo mode with no configured providers. This is an image-build check, not Cloud deployment.
 
 Build and push a Linux image to a registry you control:
 

@@ -227,6 +227,86 @@ def test_live_capture_uses_nano_once_and_marks_estimated_duration(settings):
     assert "durationSource" not in result.tasks[0].model_dump()
 
 
+def test_original_capture_survives_lossy_extraction_and_reaches_task_brief(settings):
+    original = (
+        "Prepare a five-slide client project update, 45 minutes. "
+        "Audience: a small design team. Use an existing outline and end with one decision. "
+        "Also reply to Jordan, 20 minutes."
+    )
+    body = capture_payload(
+        title="Prepare client project update slides", notes="Use the existing outline."
+    )
+    body["summary"] = "Prepare client project update slides"
+    body["tasks"].append(
+        {**body["tasks"][0], "title": "Reply to Jordan", "minutes": 20, "notes": ""}
+    )
+    config = replace(settings, mode="live")
+    captured = asyncio.run(
+        DailyAssistService(config, FakeNebius(body), NeverCall()).assist(
+            DailyAssistRequest(action="capture", date="2026-10-13", text=original)
+        )
+    )
+    task = captured.tasks[0]
+    assert (
+        "five-slide" not in task.title
+    )  # The mocked extractor really lost the quantity.
+    assert "Original capture (full text; may include other tasks):" in task.notes
+    assert (
+        original in task.notes
+        and "five-slide" in task.notes
+        and "small design team" in task.notes
+    )
+    assert (
+        captured.summary
+        == "2 task drafts. Review the titles, estimates, and details before adding."
+    )
+    brief_body = brief_payload()
+    brief_body["summary"] = "Not provided by user; focusing on workflow."
+    provider = FakeNebius(brief_body)
+    result = asyncio.run(
+        DailyAssistService(config, provider, NeverCall()).assist(
+            DailyAssistRequest(
+                action="breakdown",
+                date="2026-10-13",
+                task={
+                    "title": task.title,
+                    "minutes": task.minutes,
+                    "notes": task.notes,
+                },
+            )
+        )
+    )
+    assert original in provider.calls[0]["payload"]["task"]["notes"]
+    assert result.summary == "1 proposed step. Review and adjust it before starting."
+
+
+@pytest.mark.parametrize("source_length", [1400, 1401])
+def test_original_reference_bounds_preserve_flags_and_label_excerpts(
+    settings, source_length
+):
+    prefix = "Prepare five slides for a small design team. "
+    original = prefix + "x" * (source_length - len(prefix))
+    assert len(original) == source_length
+    provider = FakeNebius(
+        capture_payload(
+            notes="n" * 2000, durationSource="estimate", dueDate="2026-10-12"
+        )
+    )
+    result = asyncio.run(
+        DailyAssistService(
+            replace(settings, mode="live"), provider, NeverCall()
+        ).assist(DailyAssistRequest(action="capture", date="2026-10-13", text=original))
+    )
+    note = result.tasks[0].notes
+    assert len(note) <= 2000 and note.endswith(original[:1400])
+    assert "Duration estimate: 45 minutes" in note and "overdue" in note
+    assert "…" in note  # Model-written notes were shortened to retain the source.
+    if source_length == 1400:
+        assert "Original capture (full text;" in note and "excerpt" not in note
+    else:
+        assert "Original capture (excerpt: first 1400 of 1401 characters;" in note
+
+
 def test_dependency_indices_support_valid_explicit_order_and_reject_cycles():
     body = capture_payload()
     body["tasks"].append(

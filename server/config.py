@@ -19,7 +19,7 @@ class Settings:
     mode: str = "demo"
     nebius_api_key: str = ""
     nebius_base_url: str = "https://api.tokenfactory.us-central1.nebius.com/v1"
-    nano_model: str = "nvidia/nvidia-nemotron-3-nano-30b-a3b"
+    nano_model: str = "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B"
     super_model: str = "nvidia/nemotron-3-super-120b-a12b"
     ultra_model: str = "nvidia/Nemotron-3-Ultra-550b-a55b"
     enable_ultra: bool = False

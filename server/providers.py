@@ -38,9 +38,14 @@ class NebiusClient:
             ],
             "response_format": {"type": "json_schema", "json_schema": {"name": output.__name__, "strict": True, "schema": schema or output.model_json_schema()}},
             "temperature": 0.2,
-            "max_tokens": self.settings.max_completion_tokens,
+            "max_completion_tokens": self.settings.max_completion_tokens,
+            "n": 1,
             "stream": False,
         }
+        # Nano extracts bounded task fields; a hidden reasoning pass is unnecessary.
+        # This is a top-level extension in raw HTTP, not an `extra_body` wrapper.
+        if model == self.settings.nano_model:
+            body["chat_template_kwargs"] = {"enable_thinking": False}
         own_client = self.client is None
         client = self.client or httpx.AsyncClient(timeout=self.settings.provider_timeout_seconds, follow_redirects=False)
         try:
@@ -60,7 +65,7 @@ class NebiusClient:
             if not isinstance(choice, dict) or not isinstance(choice.get("message"), dict):
                 raise ValueError("Invalid completion message")
             if choice.get("finish_reason") != "stop" or choice["message"].get("refusal"):
-                raise ProviderError("incomplete_output", "The model did not produce a complete proposal within the output limit. The event was not changed.")
+                raise ProviderError("incomplete_output", "The model did not produce a complete proposal within the output limit. No changes were applied.")
             result = output.model_validate_json(choice["message"]["content"])
             usage = data.get("usage", {})
             if not isinstance(usage, dict) or any(key in usage and (type(usage[key]) is not int or usage[key] < 0) for key in ("prompt_tokens", "completion_tokens")):
@@ -76,11 +81,11 @@ class NebiusClient:
             trace = TraceStep(id=label.lower().replace(" ", "-"), label=label, detail=detail, status="complete", model=returned_model or model, provider="Nebius Token Factory", durationMs=round((time.perf_counter() - start) * 1000), inputTokens=usage.get("prompt_tokens"), outputTokens=usage.get("completion_tokens"))
             return result, trace
         except httpx.TimeoutException as exc:
-            raise ProviderError("provider_timeout", "Token Factory timed out. No event changes were applied.", 504) from exc
+            raise ProviderError("provider_timeout", "Token Factory timed out. No changes were applied.", 504) from exc
         except httpx.RequestError as exc:
             raise ProviderError("provider_unavailable", "Could not reach Token Factory. No demo result was substituted.", 503) from exc
         except (ValueError, KeyError, IndexError, TypeError, ValidationError) as exc:
-            raise ProviderError("invalid_output", "The model response failed the required schema. No event changes were applied.") from exc
+            raise ProviderError("invalid_output", "The model response failed the required schema. No changes were applied.") from exc
         finally:
             if own_client:
                 await client.aclose()

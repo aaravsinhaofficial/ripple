@@ -1,6 +1,6 @@
 # Ripple — Make today workable
 
-**Working submission copy: Best Apps and Agents.** The current product is a daily recovery planner. The earlier event planner remains available at `?workspace=events`. Live provider execution, cloud deployment, the final public video and user evaluation are still pending. Update the evidence below against the exact submitted revision.
+**Working submission copy: Best Apps and Agents.** The current product is a daily recovery planner. The earlier event planner remains available at `?workspace=events`. Nano capture and Super task briefs have run on Token Factory, including the real local browser/API flow. Cloud hosting, Tavily, the final public video and user evaluation remain pending. Update the evidence below against the exact submitted revision.
 
 ## Short description
 
@@ -28,7 +28,7 @@ Nemotron Super produces a concise starting brief for a selected task. When the u
 
 This division keeps hard scheduling constraints in deterministic code while using models for language interpretation and task preparation. A daily assistance request makes at most one model call and one optional basic search. Failures remain explicit; a local result is never substituted for a failed live request.
 
-**Implemented does not mean runtime-verified.** The adapters, schema checks, routing, traces and failure handling are implemented and tested with mocks. No successful real Nebius/NVIDIA or Tavily call is claimed yet. The final submission must show actual execution.
+**Runtime evidence:** ten real Token Factory attempts produced nine completed responses and one explicit timeout. Synthetic cases and two browser runs are preserved in the [redacted record](evidence/daily-live-2026-10-13.json), including quality problems and subsequent fixes. The final browser run preserved the selected task's deliverable count and audience. Tavily and Cloud hosting remain unverified; these calls used a local private API.
 
 ## How it is built
 
@@ -48,11 +48,11 @@ That design may help people trust and act on a revised day, but this remains a h
 
 | Item | Current evidence and remaining work |
 | --- | --- |
-| Public app | [GitHub Pages URL](https://aaravsinhaofficial.github.io/ripple/) exists. Verify the new daily revision after publication; earlier public checks concerned the event workspace. |
+| Public app | [GitHub Pages](https://aaravsinhaofficial.github.io/ripple/) serves the daily MVP. Revision `791aaf8` passed CI and 9 public daily browser checks plus the public smoke check. |
 | Public source | [Repository](https://github.com/aaravsinhaofficial/ripple) includes setup instructions and an MIT license. Record the final commit. |
-| Core daily workflow | Implemented in the browser: capture, edit, plan, recover, review/apply, completion, recurrence, history and exports. Re-run the daily browser tests on the final revision. |
-| Local correctness | 137 frontend tests, 123 Python tests (including 38 daily assistance cases), 23 browser workflows, 23 retained event-contract cases and the production build passed for v0.3.0. Provider tests use mocks or the local rules service. |
-| NVIDIA on Nebius | Pending real calls. Save the model identity, usage, response, duration and review outcome from capture and a task brief. |
+| Core daily workflow | Implemented and browser-tested: capture, edit, plan, recover, review/apply, completion, recurrence, history and exports. See the [validation record](validation.md). |
+| Local correctness | 137 frontend tests, 23 browser workflows, 23 retained event-contract cases and the production build passed for v0.3.0; the live-integration update passes 163 Python tests, including 41 daily-service and 34 harness cases. Provider tests use mocks or the local rules service. |
+| NVIDIA on Nebius | Real Nano and Super calls verified October 13, including two browser/API runs. [Evidence and limitations](validation.md#real-daily-assistance--october-13-2026). |
 | Tavily | Pending real search. Show the explicit user action, retrieved sources and accepted source-linked brief. |
 | Nebius infrastructure | Templates are prepared. No Endpoint or Job deployment is claimed without a completed workload and actual resource evidence. |
 | Public video | Pending. Use the [under-three-minute storyboard](demo-script.md). |

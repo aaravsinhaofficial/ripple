@@ -32,6 +32,35 @@ def test_provider_reports_actual_served_model_and_usage():
     assert "requested-model" in trace.detail
 
 
+def test_completion_budget_includes_reasoning_and_requests_one_choice():
+    async def call():
+        def respond(request):
+            body = json.loads(request.content)
+            assert body["max_completion_tokens"] == 1200
+            assert body["n"] == 1
+            assert "max_tokens" not in body
+            return httpx.Response(200, json=envelope({"kind": "unknown", "targetId": None, "minutes": 0, "description": "unknown"}))
+        async with httpx.AsyncClient(transport=httpx.MockTransport(respond)) as client:
+            await NebiusClient(Settings(mode="live", nebius_api_key="test", max_completion_tokens=1200), client).structured(model="requested-model", output=Interpretation, system="Immutable constraints", payload={"text": "test"}, label="Parse")
+    asyncio.run(call())
+
+
+@pytest.mark.parametrize("use_nano", [True, False])
+def test_fast_extraction_setting_is_limited_to_nano(use_nano):
+    config = Settings(mode="live", nebius_api_key="test")
+    async def call():
+        def respond(request):
+            body = json.loads(request.content)
+            if use_nano:
+                assert body["chat_template_kwargs"] == {"enable_thinking": False}
+            else:
+                assert "chat_template_kwargs" not in body
+            return httpx.Response(200, json=envelope({"kind": "unknown", "targetId": None, "minutes": 0, "description": "unknown"}))
+        async with httpx.AsyncClient(transport=httpx.MockTransport(respond)) as client:
+            await NebiusClient(config, client).structured(model=config.nano_model if use_nano else config.super_model, output=Interpretation, system="Immutable constraints", payload={"text": "test"}, label="Parse")
+    asyncio.run(call())
+
+
 @pytest.mark.parametrize("body", [[], {}, {"choices": []}, {"choices": [None]}, {"choices": [{"message": []}]}, envelope({"kind": "delay", "targetId": "keynote", "minutes": "40", "description": "late"}), envelope({"kind": "delay", "targetId": "keynote", "minutes": 40, "description": "late"}, usage=[]), envelope({"kind": "delay", "targetId": "keynote", "minutes": 40, "description": "late"}, usage={"prompt_tokens": True})])
 def test_invalid_provider_json_is_sanitized_and_never_becomes_demo(body):
     with pytest.raises(ProviderError) as error:

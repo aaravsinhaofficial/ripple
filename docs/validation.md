@@ -1,6 +1,20 @@
 # Validation record
 
-This record concerns the local implementation. No real Nebius or Tavily credentials were available during this build. Mock-provider tests verify orchestration and failure handling; they do not establish model quality, latency, cost, or availability.
+This record separates local and mocked checks from actual provider execution. Real Nano and Super calls were verified on October 13, 2026. Tavily and Cloud hosting remain unverified. Mock tests alone do not establish model quality, latency, cost, or availability.
+
+## Real daily assistance — October 13, 2026
+
+[Redacted synthetic evidence](evidence/daily-live-2026-10-13.json) records **10 actual Token Factory attempts: 9 completed and 1 timed out**. No automatic retries or search calls were made. Returned identities were `nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B` and `nvidia/nemotron-3-super-120b-a12b`. Every call was capped at 1,200 completion tokens and one choice.
+
+The direct cases cover explicit durations, tomorrow's date, a clearly labeled missing-duration estimate, an explicit dependency chain and task-specific steps. The initial timeout and imperfect outputs remain in the evidence. Human review led to Nano's non-thinking setting, preservation of original capture context, clearer budget instructions and application-derived review summaries. See the [provider findings](feedback.md); automated structural passes are not full quality approval.
+
+Two separate fresh Chromium runs exercised the real browser → authenticated local HTTP API → Token Factory route. Both checked that capture requires review, only approved tasks persist, model actions do not complete tasks, app credentials stay out of browser storage, reload clears the connection and no browser errors occur. The final run retained the five-slide limit and design-team audience; its brief used four content slides plus the fifth decision slide. Final provider durations were **2.70 seconds for capture** and **3.42 seconds for the brief**, observations from one run rather than a benchmark. [Capture screenshot](assets/ripple-live-capture.png) · [Brief screenshot](assets/ripple-live-brief.png).
+
+Reported usage estimates to **$0.00285738** at the published Nano/Super rates. One timed-out call has unknown usage; this is not an account billing total. No ongoing Cloud resources were created. The published GitHub Pages app still serves the local planner; these live flows used a private local backend.
+
+After the live-integration fixes, **163 Python tests** pass, including 41 daily-service and 34 evaluation-harness cases. These automated tests use mocks; actual live evidence is recorded separately above.
+
+The repeatable [daily evaluator](daily-live-evaluation.md) defaults to zero provider calls. Its explicit live mode permits one selected case at a time, checkpoints failures, and never substitutes a local answer for a provider error.
 
 ## Daily MVP — v0.3.0 · October 13, 2026
 
@@ -9,6 +23,8 @@ The default product is now the daily recovery workspace. The earlier event works
 Local verification on the release working tree passed **137 frontend tests**, **123 Python tests**, **23 cross-runtime event cases**, **23 browser workflows** (10 daily and 13 retained event cases), and the production build. The frontend total includes 53 daily planner/storage/capture/export tests and 10 daily client-boundary tests. The Python total includes 38 daily assistance cases. Provider calls are mocked; the browser's actual HTTP service tests use rule-based mode.
 
 Daily browser coverage starts with an empty workspace, captures reviewed tasks, adds fixed appointments, previews without mutating the saved day, approves, loses time, and keeps all unscheduled minutes visible. It verifies dependencies, same-day deadlines, explicit completion, recurring-task duplicate prevention, focus timing, validated backup replacement, undo, TXT/ICS exports, phone layouts, keyboard/focus behavior, unavailable storage, unreadable data recovery and forged saved-plan rejection. Assistant checks cover the real local HTTP route, token isolation, visible capture metadata and cancellation without stale draft replacement.
+
+Revision [`791aaf8`](https://github.com/aaravsinhaofficial/ripple/commit/791aaf8) passed [GitHub Actions](https://github.com/aaravsinhaofficial/ripple/actions/runs/38355208307) and [deployed to Pages](https://github.com/aaravsinhaofficial/ripple/actions/runs/38355208531). The published daily app then passed **9 browser cases**, with the local-HTTP case correctly skipped, plus the public HTTP/assets/approval/persistence/mobile smoke check. No provider calls were made by these public checks.
 
 Public daily-only checks require no local backend or provider calls:
 
@@ -85,7 +101,7 @@ The public demo's examples are fictional. Local search is bounded and returns th
 
 ## Remaining evidence before submission
 
-1. Run real daily capture through Nano and task briefs through Super on Token Factory; preserve redacted request/response, actual model identity, usage and review outcome.
+1. Recheck the final submitted revision with the published daily cases if provider or prompt changes follow the October 13 live evidence.
 2. Run one explicitly requested Tavily research case and retain the retrieved source URLs and resulting brief. Citation matching alone does not verify every claim.
 3. Deploy the Nebius Endpoint if claiming cloud hosting; record a successful actual workload. Serverless Jobs and Ultra currently belong to the retained event workflow and must remain described that way.
 4. Ask intended users to enter their real workday and recover from an interruption. Record observed usefulness and friction; no willingness to pay or impact is established by automated tests.

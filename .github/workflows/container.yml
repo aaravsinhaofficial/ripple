@@ -1,0 +1,85 @@
+name: Build backend container
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        shell: bash
+    env:
+      RIPPLE_IMAGE: ripple-backend:${{ github.sha }}
+    steps:
+      - name: Check out source
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+
+      - name: Build Linux AMD64 image
+        run: |
+          docker build --pull --platform linux/amd64 \
+            --file server/Dockerfile --tag "$RIPPLE_IMAGE" .
+          test "$(docker image inspect --format '{{.Os}}/{{.Architecture}}' "$RIPPLE_IMAGE")" = linux/amd64
+
+      - name: Check health without provider access
+        timeout-minutes: 2
+        run: |
+          mkdir -p "$RUNNER_TEMP/ripple-container"
+          docker run --detach --name ripple-container-check --network none \
+            --env RIPPLE_MODE=demo \
+            --env NEBIUS_API_KEY= --env TAVILY_API_KEY= \
+            --env RIPPLE_ENABLE_TAVILY=false --env RIPPLE_ENABLE_ULTRA=false \
+            "$RIPPLE_IMAGE"
+          docker exec -i ripple-container-check python - <<'PY' > "$RUNNER_TEMP/ripple-container/health.json"
+          import json
+          import time
+          import urllib.request
+
+          deadline = time.monotonic() + 45
+          while time.monotonic() < deadline:
+              try:
+                  with urllib.request.urlopen("http://127.0.0.1:8000/health", timeout=2) as response:
+                      health = json.load(response)
+              except OSError:
+                  time.sleep(1)
+                  continue
+              assert health["status"] == "ok", health
+              assert health["mode"] == "demo", health
+              assert health["configured"] == {"nebius": False, "tavily": False}, health
+              print(json.dumps(health, indent=2))
+              break
+          else:
+              raise SystemExit("Container did not become healthy within 45 seconds")
+          PY
+
+      - name: Save checked image
+        run: |
+          docker save --output "$RUNNER_TEMP/ripple-container/ripple-backend-linux-amd64.tar" "$RIPPLE_IMAGE"
+          docker image inspect --format '{"id":"{{.Id}}","os":"{{.Os}}","architecture":"{{.Architecture}}"}' \
+            "$RIPPLE_IMAGE" > "$RUNNER_TEMP/ripple-container/image-info.json"
+          cd "$RUNNER_TEMP/ripple-container"
+          sha256sum ripple-backend-linux-amd64.tar > SHA256SUMS
+          printf 'Commit: %s\nImage: %s\nLoad: docker load --input ripple-backend-linux-amd64.tar\n' \
+            "$GITHUB_SHA" "$RIPPLE_IMAGE" > LOAD.txt
+
+      - name: Upload container image
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: ripple-backend-linux-amd64-${{ github.sha }}
+          path: ${{ runner.temp }}/ripple-container/
+          if-no-files-found: error
+          retention-days: 2
+
+      - name: Show container logs on failure
+        if: failure()
+        run: docker logs ripple-container-check || true
+
+      - name: Remove check container
+        if: always()
+        run: docker rm --force ripple-container-check > /dev/null 2>&1 || true
