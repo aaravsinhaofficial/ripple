@@ -105,6 +105,12 @@ A plain-text plan includes the schedule, overflow and checks. ICS exports use th
 
 The optional service connection exists only in memory. A requested AI action sends its task text to the private service and model provider. Explicit web research sends the selected task title or query to Tavily; it does not include private task notes or the rest of the workspace.
 
+## Connections and reviewed imports
+
+The plug icon opens a common import hub. Google Calendar and Google Tasks use browser authorization; Notion, Granola and Otter use isolated OAuth MCP sessions on the private API. Calendar files, mapped CSV task lists, Markdown/text actions and structured connector packs work locally without account setup. Account connections require separate consent and setup; connections in the assistant environment are not inherited by the web app.
+
+Imports preserve source identity and links. A preview distinguishes new, changed, already-imported and skipped items. New items are selected initially; replacing changed items requires explicit selection, preserves completed status, and shows any local edits. The whole import is validated before applying and can be undone through History. Reimporting is a reviewed refresh, not continuous or bidirectional sync. Removed source entries are not automatically deleted locally. [Connection setup, formats and exact limits](connectors.md).
+
 ## MVP boundary and verification
 
 There is no login, monetization, team collaboration, calendar account connection, autonomous external action, automatic time tracking or claimed energy-based optimization. The earlier event tool remains at `?workspace=events`, with separate local storage.

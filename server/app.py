@@ -12,6 +12,7 @@ from fastapi.responses import JSONResponse
 from pydantic import Field
 
 from .config import Settings
+from .connectors import ConnectorService, install_connector_routes
 from .constraints import failure_details, validate
 from .daily import DailyAssistRequest, DailyAssistResult, DailyAssistService
 from .jobs import JobStore, QueueError
@@ -40,7 +41,7 @@ async def execute_claim(store: JobStore, service: RepairService, claimed: dict):
         store.finish(claimed["id"], claimed["leaseToken"], error={"code": "repair_failed", "message": "The repair could not complete. The current schedule was not changed."})
 
 
-def create_app(settings: Settings | None = None, service: RepairService | None = None, daily_service: DailyAssistService | None = None) -> FastAPI:
+def create_app(settings: Settings | None = None, service: RepairService | None = None, daily_service: DailyAssistService | None = None, connector_service: ConnectorService | None = None) -> FastAPI:
     settings = settings or Settings.from_env()
     service = service or RepairService(settings)
     daily_service = daily_service or DailyAssistService(settings, nebius=service.nebius)
@@ -80,7 +81,7 @@ def create_app(settings: Settings | None = None, service: RepairService | None =
                 if len(data) > limit:
                     return JSONResponse(status_code=413, content={"error": {"code": "too_large", "message": "The request is too large."}})
             request._body = bytes(data)
-            if request.url.path in {"/api/repair", "/api/jobs", "/api/daily/assist"}:
+            if request.url.path in {"/api/repair", "/api/jobs", "/api/daily/assist"} or request.url.path.startswith("/api/connectors/"):
                 now = time.monotonic()
                 key = request.client.host if request.client else "unknown"
                 for stale in [k for k, q in visits.items() if not q or q[-1] < now - 60]:
@@ -97,7 +98,7 @@ def create_app(settings: Settings | None = None, service: RepairService | None =
         return response
 
     # Added last so CORS wraps early size/rate rejections as well as route responses.
-    app.add_middleware(CORSMiddleware, allow_origins=list(settings.allowed_origins), allow_credentials=False, allow_methods=["GET", "POST", "OPTIONS"], allow_headers=["Content-Type", "Authorization"], max_age=600)
+    app.add_middleware(CORSMiddleware, allow_origins=list(settings.allowed_origins), allow_credentials=False, allow_methods=["GET", "POST", "OPTIONS"], allow_headers=["Content-Type", "Authorization", "X-Ripple-Connector-Session"], max_age=600)
 
     async def authorize(authorization: str | None = Header(default=None)):
         if settings.mode == "live" and not settings.access_token:
@@ -128,6 +129,8 @@ def create_app(settings: Settings | None = None, service: RepairService | None =
     @app.get("/health")
     async def health():
         return {"status": "ok", "mode": settings.mode, "configured": {"nebius": bool(settings.nebius_api_key), "tavily": bool(settings.enable_tavily and settings.tavily_api_key)}, "requiresAuth": bool(settings.access_token) or settings.mode == "live", "models": {"nano": settings.nano_model, "super": settings.super_model, "ultra": settings.ultra_model if settings.enable_ultra else None}, "queue": "inline" if settings.inline_jobs else "remote-worker"}
+
+    install_connector_routes(app, settings, authorize, connector_service)
 
     @app.get("/api/session", dependencies=[Depends(authorize)])
     async def session():

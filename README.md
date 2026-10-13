@@ -2,7 +2,7 @@
 
 **Make today workable.** A daily planner that keeps unfinished work visible when the day changes.
 
-[Open Ripple](https://aaravsinhaofficial.github.io/ripple/) · [Product guide](docs/product.md) · [Live service setup](docs/deployment.md) · [Submission draft](docs/submission.md) · [MIT license](LICENSE)
+[Open Ripple](https://aaravsinhaofficial.github.io/ripple/) · [Product guide](docs/product.md) · [Connections & imports](docs/connectors.md) · [Live service setup](docs/deployment.md) · [Submission draft](docs/submission.md) · [MIT license](LICENSE)
 
 [![Verify](https://github.com/aaravsinhaofficial/ripple/actions/workflows/ci.yml/badge.svg)](https://github.com/aaravsinhaofficial/ripple/actions/workflows/ci.yml)
 
@@ -42,6 +42,24 @@ Review the estimates before adding the drafts. Missing estimates start at 30 min
 | Portable day plan | Text and timezone-aware ICS downloads; no automatic calendar sync |
 
 Tasks carry forward until you finish or delete them. A timer ending or a time block passing never marks work done. For partially finished work, update the remaining estimate before replanning. Browser storage is not device sync; download a backup to keep a portable copy.
+
+## Bring in the work you already have
+
+Open **Connections & imports** (the plug icon). Every source uses a preview: select the items you want, review dates and estimates, then add them. History can undo the whole import. Reimporting checks source identities; unchanged items are skipped, and changed items require explicit selection. Local edits and completed work are preserved unless you choose a replacement; replacements never reopen a completed task.
+
+| Source | Import path |
+| --- | --- |
+| Google Calendar | Browser OAuth, calendar picker, date range, recurring event instances, fixed commitments. Requires the site's public Google client ID. |
+| Google Tasks | Browser OAuth and task-list picker; unfinished tasks include notes and due dates. Review default duration estimates. |
+| Notion, Granola, Otter | Official MCP OAuth through the private backend, then search and read selected notes. Explicit action items become task drafts. |
+| Apple, Outlook, Google and other calendars | Local `.ics` files, timezone conversion, bounded recurrence expansion and explicit all-day blocking. |
+| Notion, Todoist and spreadsheets | Local CSV imports with column mapping, source IDs, estimates, priorities, dates and completion status. |
+| Meeting notes and checklists | Paste or upload Markdown/text; import unchecked actions while ordinary transcript prose remains excluded. |
+| Other assistant-connected apps | A validated JSON connector pack can carry tasks and events with original source links. This is a portable handoff, not a direct connection to those services. |
+
+Files and pasted notes stay in your browser. Google access tokens stay in memory; MCP provider tokens stay on the private backend in isolated, temporary sessions. Imports make no model calls and write nothing back to the source. They are snapshots: refreshing can propose updates, but deleted source items are not automatically removed from Ripple.
+
+**Connection status:** OAuth/API flows are implemented and covered by synthetic browser and protocol tests. Real account authorization and selected-item imports still need verification for each provider. Your connections inside ChatGPT do not automatically authorize the public Ripple website. [Setup, supported formats, and limitations](docs/connectors.md).
 
 ## Optional AI assistance
 
@@ -104,4 +122,4 @@ Ripple began as a single-track event schedule repair tool. That workspace remain
 
 The project is being prepared for the 2026 Nebius × NVIDIA Global AI Hackathon, Best Apps and Agents track. [Submission draft](docs/submission.md), [demo storyboard](docs/demo-script.md), [official setup resources](docs/resources.md), and [platform research](docs/platform-research.md) separate implemented work from pending runtime evidence.
 
-MIT licensed. See [LICENSE](LICENSE). Model and service use remains subject to provider terms.
+Ripple's own source is MIT licensed. See [LICENSE](LICENSE) and the [ical.js third-party notice](public/third-party-notices.txt). Model and service use remains subject to provider terms.

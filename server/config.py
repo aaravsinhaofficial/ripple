@@ -4,6 +4,7 @@ from __future__ import annotations
 import os
 from dataclasses import dataclass
 from pathlib import Path
+from urllib.parse import urlsplit
 
 from dotenv import load_dotenv
 
@@ -36,6 +37,9 @@ class Settings:
     max_completion_tokens: int = 2000
     provider_timeout_seconds: int = 75
     job_retention_hours: int = 24
+    public_api_url: str = ""
+    notion_api_token: str = ""
+    connector_session_minutes: int = 60
 
     @classmethod
     def from_env(cls) -> Settings:
@@ -52,6 +56,13 @@ class Settings:
         origins = tuple(x.strip() for x in os.getenv("RIPPLE_ALLOWED_ORIGINS", ",".join(cls.allowed_origins)).split(",") if x.strip())
         if "*" in origins:
             raise ValueError("Use explicit RIPPLE_ALLOWED_ORIGINS, never '*'")
+        public_api_url = os.getenv("RIPPLE_PUBLIC_API_URL", "").rstrip("/")
+        if public_api_url:
+            parsed = urlsplit(public_api_url)
+            if (not parsed.hostname or parsed.username or parsed.password or parsed.path
+                    or parsed.query or parsed.fragment or parsed.scheme not in {"https", "http"}
+                    or (parsed.scheme == "http" and parsed.hostname not in {"localhost", "127.0.0.1"})):
+                raise ValueError("RIPPLE_PUBLIC_API_URL must be an HTTPS origin (localhost HTTP is allowed)")
         return cls(
             mode=mode,
             nebius_api_key=os.getenv("NEBIUS_API_KEY", ""),
@@ -73,4 +84,7 @@ class Settings:
             max_completion_tokens=_int("RIPPLE_MAX_COMPLETION_TOKENS", 2000, 512, 4096),
             provider_timeout_seconds=_int("RIPPLE_PROVIDER_TIMEOUT", 75, 5, 120),
             job_retention_hours=_int("RIPPLE_JOB_RETENTION_HOURS", 24, 1, 168),
+            public_api_url=public_api_url,
+            notion_api_token=os.getenv("NOTION_API_TOKEN", ""),
+            connector_session_minutes=_int("RIPPLE_CONNECTOR_SESSION_MINUTES", 60, 5, 120),
         )

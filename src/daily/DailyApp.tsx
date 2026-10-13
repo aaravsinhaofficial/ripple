@@ -20,6 +20,7 @@ import {
   MoreHorizontal,
   Pause,
   Play,
+  Plug,
   Plus,
   RotateCcw,
   Search,
@@ -50,6 +51,8 @@ import TaskEditor from "./TaskEditor";
 import Preferences from "./Preferences";
 import CommitmentEditor from "./CommitmentEditor";
 import DailyModal from "./DailyModal";
+import Connectors from "./Connectors";
+import { forgetConnectorSession } from "./connectorClient";
 import {
   assist,
   presetServiceUrl,
@@ -273,6 +276,7 @@ export default function DailyApp() {
     | "connect"
     | "help"
     | "export"
+    | "integrations"
     | null
   >(null);
   const [preview, setPreview] = useState<Preview | null>(null);
@@ -893,6 +897,10 @@ export default function DailyApp() {
             <History size={17} />
             History & undo
           </button>
+          <button className="d-nav" onClick={() => setModal("integrations")}>
+            <Plug size={17} />
+            Connections & imports
+          </button>
           <button className="d-nav" onClick={() => setModal("settings")}>
             <Settings2 size={17} />
             Preferences
@@ -928,6 +936,9 @@ export default function DailyApp() {
               />
               <kbd>/</kbd>
             </label>
+            <button className="d-icon" aria-label="Connections and imports" onClick={() => setModal("integrations")}>
+              <Plug size={19} />
+            </button>
             <button
               className="d-icon"
               aria-label="Export and backup"
@@ -2292,6 +2303,23 @@ export default function DailyApp() {
           )}
         </DailyModal>
       )}
+      {modal === "integrations" && (
+        <Connectors
+          workspace={workspace}
+          connection={connection}
+          onClose={() => setModal(null)}
+          onConnectService={() => {
+            setConnectionDraft(connection.url ? connection : { url: presetServiceUrl(), token: "" });
+            setConnectionStatus("");
+            setModal("connect");
+          }}
+          onApply={(next, count) => {
+            update(next, "Import connected work");
+            setModal(null);
+            setToast(`${count} items imported. Review a fresh plan when ready. History can undo this.`);
+          }}
+        />
+      )}
       {modal === "connect" && (
         <DailyModal
           title="A hand with the thinking."
@@ -2344,11 +2372,17 @@ export default function DailyApp() {
           )}
           <div className="d-modal-actions">
             {connection.url && (
+              <button className="d-button d-secondary" onClick={() => setModal("integrations")}>
+                Open connections & imports
+              </button>
+            )}
+            {connection.url && (
               <button
                 className="d-button d-secondary"
                 onClick={() => {
                   connectionController.current?.abort();
                   setBusy(false);
+                  forgetConnectorSession(connection);
                   setConnection({ url: "", token: "" });
                   setConnectionDraft({ url: presetServiceUrl(), token: "" });
                   setConnectionStatus("Disconnected.");
@@ -2509,6 +2543,11 @@ export default function DailyApp() {
             restore it later.
           </p>
           <div className="d-export-list">
+            <button onClick={() => setModal("integrations")}>
+              <Plug size={20} />
+              <span><strong>Import connected work</strong><small>Calendars, task lists, and meeting notes · Review before adding</small></span>
+              <ArrowRight size={17} />
+            </button>
             <button onClick={() => exportFile("backup")}>
               <Download size={20} />
               <span>

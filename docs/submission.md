@@ -20,6 +20,8 @@ When the day changes, a guided form handles four concrete cases: lost time, a ta
 
 For more complex days, task details add projects, priorities, due dates and times, prerequisites, recurrence and a choice of uninterrupted or split work. A focus timer supports doing the work. Text, ICS and validated workspace backups make it portable. The core product needs no account or connected service.
 
+Connections and imports bring existing work into the same review flow: calendar files become fixed commitments, task spreadsheets retain dates and notes, and meeting checklists yield explicit action items. Repeat imports recognize unchanged records and require a separate choice for source changes. Google Calendar/Tasks authorization and official Notion, Granola and Otter MCP adapters are implemented and fixture-tested; real account authorization remains pending. Files and pasted notes work immediately. [Connection setup and limits](connectors.md).
+
 ## Where AI helps
 
 The daily API uses NVIDIA Nemotron Nano on Nebius Token Factory to turn a messy note into structured task drafts. The user reviews those drafts before adding them; assumed durations are labeled. Real dates, bounded estimates and dependency references are validated independently.
@@ -51,6 +53,7 @@ That design may help people trust and act on a revised day, but this remains a h
 | Public app | [GitHub Pages](https://aaravsinhaofficial.github.io/ripple/) serves the daily MVP. Revision [`264fdc3`](https://github.com/aaravsinhaofficial/ripple/commit/264fdc3) [deployed successfully](https://github.com/aaravsinhaofficial/ripple/actions/runs/38358458374), then passed 10 public daily browser checks and the public smoke check. The local HTTP-service case was excluded; no provider calls were made. |
 | Public source | [Repository](https://github.com/aaravsinhaofficial/ripple) includes setup instructions and an MIT license. Current verified revision: `264fdc3`; update this record if the submitted build changes. |
 | Core daily workflow | Implemented and browser-tested: capture, edit, plan, recover, review/apply, completion, recurrence, history and exports. See the [validation record](validation.md). |
+| Connections and imports | v0.4.0 local checks passed 200 frontend tests, 203 Python tests, 33 browser workflows, 23 event-contract cases and the production build. File imports, safe refresh and reviewed action extraction are verified. Google and MCP account flows use fixtures; no real provider account or private document has been imported. |
 | Automated correctness | [CI on `264fdc3`](https://github.com/aaravsinhaofficial/ripple/actions/runs/38358458404) passed 146 frontend tests, 171 Python tests, 24 browser workflows, 23 retained event-contract cases and the production build. Provider tests use mocks or the local rules service. Connection checks validate the app access code without submitting task data or using provider allowance. |
 | NVIDIA on Nebius | Real Nano and Super calls verified October 13, including two browser/API runs. [Evidence and limitations](validation.md#real-daily-assistance--october-13-2026). |
 | Tavily | Pending real search. Show the explicit user action, retrieved sources and accepted source-linked brief. |

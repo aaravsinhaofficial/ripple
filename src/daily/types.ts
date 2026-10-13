@@ -2,6 +2,19 @@ export type ISODate = string
 export type TaskPriority = 'high' | 'normal' | 'low'
 export type TaskRecurrence = 'none' | 'daily' | 'weekdays' | 'weekly'
 
+export type ImportProvider = 'ics' | 'csv' | 'notes' | 'json' | 'google-calendar' | 'google-tasks' | 'notion' | 'todoist' | 'granola' | 'otter' | 'github' | 'linear' | 'outlook'
+
+export interface ImportedSource {
+  provider: ImportProvider
+  label: string
+  namespace: string
+  externalId: string
+  fingerprint: string
+  importedAt: string
+  url?: string
+  sourceDate?: ISODate
+}
+
 export interface DailyTask {
   id: string
   title: string
@@ -19,6 +32,7 @@ export interface DailyTask {
   seriesId?: string
   createdAt: string
   completedAt?: string
+  source?: ImportedSource
 }
 
 export interface Commitment {
@@ -28,6 +42,7 @@ export interface Commitment {
   start: number
   end: number
   notes: string
+  source?: ImportedSource
 }
 
 export interface DaySettings {

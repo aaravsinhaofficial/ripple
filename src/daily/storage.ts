@@ -31,6 +31,15 @@ const text = (value: unknown, max: number, empty = false): value is string => ty
 const integer = (value: unknown, min: number, max: number): value is number => typeof value === 'number' && Number.isInteger(value) && value >= min && value <= max
 const keys = (value: Record<string, unknown>, allowed: string[]) => Object.keys(value).every(key => allowed.includes(key))
 const timestamp = (value: unknown) => typeof value === 'string' && value.length <= 40 && /^\d{4}-\d\d-\d\dT(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d{1,3})?(?:Z|[+-]\d\d:[0-5]\d)$/.test(value) && validDate(value.slice(0, 10)) && Number.isFinite(Date.parse(value))
+const validSource = (value: unknown): boolean => {
+  if (value === undefined) return true
+  if (!object(value) || !keys(value, ['provider', 'label', 'namespace', 'externalId', 'fingerprint', 'importedAt', 'url', 'sourceDate']) || !['ics', 'csv', 'notes', 'json', 'google-calendar', 'google-tasks', 'notion', 'todoist', 'granola', 'otter', 'github', 'linear', 'outlook'].includes(value.provider as string) || !text(value.label, 200) || !text(value.namespace, 200) || !text(value.externalId, 500) || typeof value.fingerprint !== 'string' || !/^[a-f0-9]{16}$/.test(value.fingerprint) || !timestamp(value.importedAt) || (value.sourceDate !== undefined && !validDate(value.sourceDate))) return false
+  if (value.url !== undefined) {
+    if (!text(value.url, 2000)) return false
+    try { const url = new URL(value.url); if (!['https:', 'http:'].includes(url.protocol) || url.username || url.password) return false } catch { return false }
+  }
+  return true
+}
 
 /** The import/storage boundary is strict; unrelated event backups cannot overwrite this workspace. */
 export function parseWorkspace(value: unknown): Workspace {
@@ -46,7 +55,8 @@ export function parseWorkspace(value: unknown): Workspace {
   if (!integer(settings.breakMinutes, 0, 30) || !integer(settings.focusMinutes, 10, 180)) throw new Error('Choose a 0–30 minute break and 10–180 minute focus block.')
   if (!Array.isArray(value.tasks) || value.tasks.length > 200 || !Array.isArray(value.commitments) || value.commitments.length > 50) throw new Error('A workspace supports up to 200 tasks and 50 fixed commitments.')
   for (const task of value.tasks) {
-    if (!object(task) || !keys(task, ['id', 'title', 'minutes', 'priority', 'project', 'notes', 'status', 'dueDate', 'dueTime', 'earliestDate', 'dependsOn', 'splittable', 'recurrence', 'seriesId', 'createdAt', 'completedAt']) || !text(task.id, 160) || !text(task.title, 200) || !integer(task.minutes, 1, 720) || !['high', 'normal', 'low'].includes(task.priority as string) || !text(task.project, 80, true) || !text(task.notes, 2000, true) || !['todo', 'done'].includes(task.status as string) || typeof task.splittable !== 'boolean' || !['none', 'daily', 'weekdays', 'weekly'].includes(task.recurrence as string) || !timestamp(task.createdAt)) throw new Error('Each task needs a title, 1–720 estimated minutes, priority, status and recurrence setting.')
+    if (!object(task) || !keys(task, ['id', 'title', 'minutes', 'priority', 'project', 'notes', 'status', 'dueDate', 'dueTime', 'earliestDate', 'dependsOn', 'splittable', 'recurrence', 'seriesId', 'createdAt', 'completedAt', 'source']) || !text(task.id, 160) || !text(task.title, 200) || !integer(task.minutes, 1, 720) || !['high', 'normal', 'low'].includes(task.priority as string) || !text(task.project, 80, true) || !text(task.notes, 2000, true) || !['todo', 'done'].includes(task.status as string) || typeof task.splittable !== 'boolean' || !['none', 'daily', 'weekdays', 'weekly'].includes(task.recurrence as string) || !timestamp(task.createdAt)) throw new Error('Each task needs a title, 1–720 estimated minutes, priority, status and recurrence setting.')
+    if (!validSource(task.source)) throw new Error(`Check the imported source details for “${task.title}”.`)
     if ((task.dueDate !== undefined && !validDate(task.dueDate)) || (task.earliestDate !== undefined && !validDate(task.earliestDate)) || (task.dueTime !== undefined && (!task.dueDate || !integer(task.dueTime, 0, 1440))) || (task.seriesId !== undefined && !text(task.seriesId, 160)) || (task.completedAt !== undefined && !timestamp(task.completedAt))) throw new Error(`Check the dates and deadline for “${task.title}”. A due time needs a due date.`)
     if (!Array.isArray(task.dependsOn) || task.dependsOn.length > 200 || task.dependsOn.some(id => !text(id, 160)) || new Set(task.dependsOn).size !== task.dependsOn.length || task.dependsOn.includes(task.id)) throw new Error(`Check the prerequisites for “${task.title}”; duplicates and self-dependencies are not allowed.`)
   }
@@ -64,7 +74,8 @@ export function parseWorkspace(value: unknown): Workspace {
   }
   tasks.forEach(task => visit(task.id))
   for (const commitment of value.commitments) {
-    if (!object(commitment) || !keys(commitment, ['id', 'title', 'date', 'start', 'end', 'notes']) || !text(commitment.id, 160) || !text(commitment.title, 200) || !validDate(commitment.date) || !integer(commitment.start, 0, 1439) || !integer(commitment.end, 1, 1440) || commitment.start >= commitment.end || !text(commitment.notes, 2000, true)) throw new Error('Each fixed commitment needs a title, date and end time after its start.')
+    if (!object(commitment) || !keys(commitment, ['id', 'title', 'date', 'start', 'end', 'notes', 'source']) || !text(commitment.id, 160) || !text(commitment.title, 200) || !validDate(commitment.date) || !integer(commitment.start, 0, 1439) || !integer(commitment.end, 1, 1440) || commitment.start >= commitment.end || !text(commitment.notes, 2000, true)) throw new Error('Each fixed commitment needs a title, date and end time after its start.')
+    if (!validSource(commitment.source)) throw new Error(`Check the imported source details for “${commitment.title}”.`)
   }
   if (new Set(value.commitments.map(item => item.id)).size !== value.commitments.length) throw new Error('Commitment IDs must be unique.')
   const encoded = JSON.stringify(value)
@@ -108,6 +119,8 @@ export function completeTask(workspace: Workspace, id: string, now = new Date())
   const offset = Math.round((Date.parse(`${nextDate}T12:00:00Z`) - Date.parse(`${occurrenceDate}T12:00:00Z`)) / 86400000)
   const next: DailyTask = { ...task, id: nextId, seriesId, status: 'todo', earliestDate: nextDate, createdAt: now.toISOString(), dependsOn: [...task.dependsOn] }
   delete next.completedAt
+  // A locally generated recurrence is not a second copy of the external source item.
+  delete next.source
   if (task.dueDate) next.dueDate = addDays(task.dueDate, offset)
   result.tasks.push(next)
   return parseWorkspace(result)

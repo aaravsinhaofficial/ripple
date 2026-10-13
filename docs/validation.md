@@ -2,6 +2,14 @@
 
 This record separates local and mocked checks from actual provider execution. Real Nano and Super calls were verified on October 13, 2026. Tavily and Cloud hosting remain unverified. Mock tests alone do not establish model quality, latency, cost, or availability.
 
+## Connections and imports — v0.4.0 · October 13, 2026
+
+The release working tree passed **200 frontend tests**, **203 Python tests**, **33 browser workflows**, **23 retained event-contract cases**, and the production build. The new coverage includes 37 import-engine cases, 10 Google adapter cases, 7 connector-client cases, 32 backend connector cases, and 9 browser workflows. Desktop and 390 px phone layouts were also visually inspected without horizontal overflow.
+
+Browser checks cover reviewed calendar imports becoming protected planning time, repeat-import deduplication, explicit changed-item selection, atomic rejection of malformed input, preserved task completion, History undo, CSV column mapping, and explicit action items from notes. Synthetic Google and MCP flows verify pagination, temporary credential isolation, popup origin/source checks, and cancellation of an in-flight authorization. ICS tests include recurrence exceptions, timezone conversion, second rounding and ambiguous clock changes.
+
+These checks made no paid calls and imported no private account data. File imports work without external setup. Google requires a public OAuth client ID and user consent; Notion, Granola and Otter require the private connector service and separate provider consent. Real account authorization and selected-document compatibility remain unverified. [Setup and evidence boundary](connectors.md).
+
 ## Hosted connection readiness — October 13, 2026
 
 The connection dialog now validates the app access code through authenticated `GET /api/session` before reporting a connection. An optional public URL preset fills the address only; it does not connect or transfer task data. Closing a pending check cancels it. Allowed-origin responses retain CORS headers for early request-size and rate-limit errors, so the browser can show the actual failure.
