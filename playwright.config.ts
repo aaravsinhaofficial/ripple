@@ -1,7 +1,7 @@
 import { defineConfig, devices } from '@playwright/test';
 import { existsSync } from 'node:fs';
 const python = process.env.RIPPLE_TEST_PYTHON || (existsSync('.venv/bin/python') ? '.venv/bin/python' : 'python3');
-const publicBase = process.env.RIPPLE_TEST_BASE_URL;
+const publicBase = process.env.RIPPLE_TEST_BASE_URL?.replace(/\/?$/, '/');
 export default defineConfig({
   testDir: './tests/e2e',
   use: { baseURL: publicBase || 'http://127.0.0.1:5173', ...devices['Desktop Chrome'] },

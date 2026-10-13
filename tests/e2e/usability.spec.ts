@@ -28,7 +28,7 @@ async function expectEditorToFit(page: Page, dialog: Locator) {
 }
 
 async function createCustomEvent(page: Page, checkMobileLayout = false) {
-  await page.goto('/');
+  await page.goto('./');
   await page.getByRole('button', { name: 'Create event', exact: true }).click();
   const dialog = page.getByRole('dialog');
   await expect(dialog.getByRole('heading', { name: 'Make the day your own.' })).toBeVisible();
@@ -176,7 +176,7 @@ test('both steps of the native editor fit a phone and can save a real event', as
 });
 
 test('an ongoing extension protects fixed lunch and accepts a smaller feasible change', async ({ page }) => {
-  await page.goto('/');
+  await page.goto('./');
   await page.getByLabel('Repair from time; earlier activities stay fixed').fill('09:40');
   const before = await savedPlan(page);
   const keynote = before.sessions.find(session => session.id === 'keynote')!;
