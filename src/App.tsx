@@ -2050,7 +2050,8 @@ function App() {
           <p className="modal-intro">
             For the volunteer organizer, workshop host, and person holding the
             whole day in their head. Ripple helps repair a running plan when
-            something changes.
+            something changes. It supports one event day with one activity at a
+            time, even when the group moves between rooms.
           </p>
           <div className="about-steps">
             <div>

@@ -4,6 +4,8 @@
 
 [Try the demo](https://aaravsinhaofficial.github.io/ripple/) · [Live setup](docs/deployment.md) · [Hackathon submission](docs/submission.md) · [MIT license](LICENSE)
 
+[![Verify](https://github.com/aaravsinhaofficial/ripple/actions/workflows/ci.yml/badge.svg)](https://github.com/aaravsinhaofficial/ripple/actions/workflows/ci.yml)
+
 A speaker is late. A room goes offline. The opening session runs long. A small change becomes six conversations and a broken schedule.
 
 Ripple turns that disruption into a repair you can inspect: what moves, what stays fixed, which constraints pass, and who needs a handoff. You choose a repair before it becomes the new local plan. Messages are prepared as drafts for your review.
@@ -26,6 +28,8 @@ npm run dev
 ```
 
 Open the local URL printed by Vite. Try a disruption, inspect the alternatives, apply a repair, and export the handoffs. Use the app's connection settings to point it at a separately running backend.
+
+To use your own schedule, follow [Bring your own event](docs/event-format.md). The sample JSON can be downloaded, edited, and imported from the schedule menu.
 
 ```sh
 npm test
@@ -68,6 +72,8 @@ See [platform notes](docs/platform-research.md) for sourced model and infrastruc
 - [Account setup and credit resources](docs/resources.md)
 - [Deployment instructions](docs/deployment.md)
 - [Validation scope and reproducible checks](docs/validation.md)
+- [Five-case live evaluation command](docs/live-evaluation.md)
+- [Provider feedback log](docs/feedback.md)
 
 The project was started for the 2026 Nebius × NVIDIA Global AI Hackathon, Best Apps and Agents track. Its particular focus is **constraint-checked plan repair with visible tradeoffs and targeted handoffs**. It does not claim to be the first event AI tool.
 

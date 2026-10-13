@@ -14,10 +14,10 @@ The required platform use is a runtime Token Factory call or execution on Nebius
 - [ ] Join the event on Devpost and select Best Apps and Agents.
 - [ ] Provide the functioning app/test-build URL and clear judge instructions.
 - [ ] Prove a real NVIDIA-model runtime through Nebius; record the exact models used.
-- [ ] Publish the complete repository with a detectable open source license and runnable README.
+- [x] Publish the complete repository with a detectable open source license and runnable README.
 - [ ] Explain the problem, audience, workflow, model roles, and actual Nebius service use.
 - [ ] Upload a public YouTube demonstration shorter than three minutes. Show the app functioning and its live model integration.
-- [ ] Supply useful feedback based on services actually tried.
+- [ ] Supply useful feedback based on services actually tried, using the [feedback log](feedback.md).
 - [ ] If any work predates August 26, 2026, explain the significant changes made during the submission period.
 - [ ] Test every submitted link in a fresh browser session without a developer login.
 - [ ] Keep the app accessible without charging judges until judging closes; include test credentials if access is private.
@@ -41,7 +41,7 @@ Fill in the evidence column only after observing the behavior on the final revis
 
 | Item | Evidence needed before making a claim |
 | --- | --- |
-| Local application | Build/test result and a fresh-browser walkthrough. Label local simulation explicitly. |
+| Local application | The [October 12 validation record](validation.md) documents passing local and CI tests, GitHub Pages deployment, and a fresh-browser walkthrough. The public demo is labeled as local simulation. |
 | Nano extraction | Redacted successful runtime, actual model ID, input incident, parsed result. |
 | Super repair | Successful runtime tied to alternatives that the independent validator accepted. |
 | Ultra escalation | A difficult case that actually routed to the configured model; otherwise list it as configured or planned, not demonstrated. |
@@ -71,6 +71,6 @@ Use “lowest-disruption among the evaluated plans” unless exhaustive search o
 
 The Tavily bonus requires a functional runtime API call. A mocked search or link to Tavily does not qualify. The City Winner rules and FAQ require attendance at the relevant in-person event, despite a conflicting sentence on the resources page; do not claim attendance or eligibility without evidence. [Official rules](https://nebiusglobalaihackathon.devpost.com/rules) · [FAQ](https://nebiusglobalaihackathon.devpost.com/details/faqs)
 
-Keep a short feedback log after actual use: service/model, date, expected behavior, observed behavior, reproducible input, effect on Ripple, and suggested improvement. Separate documentation observations from runtime findings. Do not invent latency, stability, support interactions, or deployment experience.
+Complete the [feedback template](feedback.md) after actual use: service/model, date, expected behavior, observed behavior, reproducible input, effect on Ripple, and suggested improvement. Separate documentation observations from runtime findings. Do not invent latency, stability, support interactions, or deployment experience.
 
 See [account and credit setup](resources.md), [submission working copy](submission.md), and [demo storyboard](demo-script.md).

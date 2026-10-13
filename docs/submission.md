@@ -1,6 +1,6 @@
 # Ripple — Keep the day moving
 
-**Submission working copy.** Best Apps and Agents track. The application is being built for this hackathon. Live provider calls, cloud deployment, measured evaluation, and the final public video are still pending. Reconcile this document with the final verified build before entering it on Devpost.
+**Submission working copy.** Best Apps and Agents track. The application is being built for this hackathon. Live provider calls, cloud deployment, measured live evaluation, and the final public video are still pending. Reconcile this document with the final verified build before entering it on Devpost.
 
 ## Short description
 
@@ -46,19 +46,20 @@ Record one concrete example for each item that was actually encountered:
 - An external resource search that helped the organizer decide what to do.
 - A measured latency, token-usage, or reliability tradeoff, with the underlying run.
 
-Do not replace these with invented experience or promotional claims.
+Do not replace these with invented experience or promotional claims. Record actual findings in the [provider feedback log](feedback.md).
 
 ## Evidence to attach before submission
 
 | Field | Current status |
 | --- | --- |
-| Public application URL | Planned: [aaravsinhaofficial.github.io/ripple](https://aaravsinhaofficial.github.io/ripple). Publication and a fresh-browser check are pending. |
-| Public repository URL | [github.com/aaravsinhaofficial/ripple](https://github.com/aaravsinhaofficial/ripple). Publication is being finalized; confirm public access, complete source, license detection, and setup instructions. |
+| Public application URL | Published: [aaravsinhaofficial.github.io/ripple](https://aaravsinhaofficial.github.io/ripple/). Fresh-browser demo workflow passed; see the [validation record](validation.md). |
+| Public repository URL | [github.com/aaravsinhaofficial/ripple](https://github.com/aaravsinhaofficial/ripple). Public source, setup instructions, and GitHub-detected MIT license verified. |
 | Public YouTube URL | Not recorded or uploaded. Use the [demo storyboard](demo-script.md). |
 | Live NVIDIA on Nebius | Not verified; requires an account, credited balance, credentials, and an end-to-end run. |
 | Tavily runtime | Not verified; requires an account, key, and an appropriate search case. |
 | Serverless Endpoint / Job | Do not claim deployment until each workload has run successfully. |
-| Evaluation results | Add measured results only after executing the final test set. |
+| Evaluation results | [Local validation](validation.md): 44 frontend tests, 62 Python tests, 15 cross-runtime cases, and 8 browser tests passed; production build passed. Live model evaluation is pending. |
+| Provider feedback | [Template prepared](feedback.md); actual runtime observations are pending. |
 | User validation | No user-study or time-saving claim is made. |
 
 ## Suggested evaluation before recording
