@@ -6,7 +6,11 @@ This record separates local and mocked checks from actual provider execution. Re
 
 The connection dialog now validates the app access code through authenticated `GET /api/session` before reporting a connection. An optional public URL preset fills the address only; it does not connect or transfer task data. Closing a pending check cancels it. Allowed-origin responses retain CORS headers for early request-size and rate-limit errors, so the browser can show the actual failure.
 
-Verification passed **146 frontend tests**, **171 Python tests**, the production build and three targeted browser checks: the real local rules API, rejected/accepted access-code flow without task transfer, and cancellation. The deployment script now repeats each `--env` and `--env-secret` argument as required by the installed CLI. These checks made no paid provider calls.
+Revision [`264fdc3`](https://github.com/aaravsinhaofficial/ripple/commit/264fdc3) passed [GitHub Actions verification](https://github.com/aaravsinhaofficial/ripple/actions/runs/38358458404): **146 frontend tests**, **171 Python tests**, **24 browser workflows**, **23 retained event-contract cases**, and the production build. Browser coverage includes the real local rules API, rejected/accepted access-code flow without task transfer, and cancellation. The deployment script now repeats each `--env` and `--env-secret` argument as required by the installed CLI. These checks made no paid provider calls.
+
+The same revision [deployed to GitHub Pages](https://github.com/aaravsinhaofficial/ripple/actions/runs/38358458374), then passed **10 public daily browser cases** and the public smoke check. Only the real local HTTP-service case was excluded. Public connection checks use mocked services; they do not establish availability of a hosted AI backend.
+
+Its [Linux AMD64 container workflow](https://github.com/aaravsinhaofficial/ripple/actions/runs/38358467887) also succeeded. The downloaded archive's checksum was verified, and the image identity is `sha256:4f2c3b37717253785068535f08b69431f69e3cdd5ca1cb46fb3aa1babb9bd706`. The workflow checks demo mode with networking disabled and no configured providers. This verifies the build artifact, not a Nebius deployment.
 
 Cloud browser federation authentication succeeded, but the signed-in account's tenant list was empty. No Cloud resources were created. Account onboarding/billing or access to an existing tenant is still required before the tested image can be deployed.
 
@@ -115,4 +119,4 @@ The public demo's examples are fictional. Local search is bounded and returns th
 4. Ask intended users to enter their real workday and recover from an interruption. Record observed usefulness and friction; no willingness to pay or impact is established by automated tests.
 5. Record the under-three-minute public YouTube demonstration using actual provider execution. Keep demo access available through judging.
 
-The [submission draft](submission.md) and [product guide](product.md) describe the current daily scope. Use the [provider feedback template](feedback.md) for actual runtime observations. No provider credentials or paid infrastructure were used during this iteration.
+The [submission draft](submission.md) and [product guide](product.md) describe the current daily scope. Use the [provider feedback log](feedback.md) for actual runtime observations. Local and CI verification use mocks or the rules service; actual Token Factory usage is recorded separately above.

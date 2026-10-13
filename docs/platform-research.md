@@ -1,6 +1,6 @@
-# Platform findings · checked 2026-10-12
+# Historical platform research · checked 2026-10-12
 
-Ripple uses a static GitHub Pages frontend and a private Python service. The documented integrations below are implemented; **no live inference or Nebius deployment has been verified with account credentials**. No paid resources were created during development.
+This October 12 research snapshot concerns the earlier event workspace. For the current daily product and deployment status, use the [product guide](product.md), [runtime validation](validation.md), and [deployment guide](deployment.md). On October 13, real Nano capture and Super task briefs ran through Token Factory; Cloud hosting and Tavily remain pending. The authenticated catalog uses `nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B`, which supersedes the older cookbook spelling below.
 
 ## Token Factory and Nemotron
 
@@ -38,4 +38,4 @@ Tavily documents 1,000 free credits monthly without a card. A basic search costs
 
 The free [Nebius AI Builder Program](https://dev.nebius.com/) offers credits/discounts across participating services; exact grants depend on the current offer. Token Factory supports applying promo codes without adding a bank card. A linked AI Cloud account and appropriate project/VM/subnet quotas are needed for Serverless. These are distinct from simply having a Token Factory API key. [Token Factory billing](https://docs.tokenfactory.nebius.com/other-capabilities/billing)
 
-Start with the local demo, then redeem credits and run a small authenticated test. Only after reviewing real usage should Ultra, Tavily, a public Endpoint, or a finite Job be enabled. Nothing in the repository claims that signup, credits, model access, or a deployment has already happened.
+The original sequence was local development, account setup, bounded inference, then optional infrastructure. Bounded Nano and Super inference has since been completed. Follow the [current account and credit record](resources.md) for the remaining Cloud and Tavily setup; this historical research is not evidence of those deployments.

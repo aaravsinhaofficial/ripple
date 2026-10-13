@@ -1,6 +1,6 @@
 # Ripple submission checklist
 
-Target: **Best Apps and Agents**, Nebius x NVIDIA Global AI Hackathon. Verified against the supplied event brief and official pages on October 12, 2026. This checklist is a preparation aid; completing source code does not mean the submission is eligible or submitted.
+Target: **Best Apps and Agents**, Nebius x NVIDIA Global AI Hackathon. Ripple's main product is the daily recovery planner; the earlier event workspace remains secondary. The requirements below were checked against the official pages on October 13, 2026. This checklist is a preparation aid; completing source code does not mean the submission is eligible or submitted.
 
 ## Dates and gates
 
@@ -13,9 +13,9 @@ The required platform use is a runtime Token Factory call or execution on Nebius
 - [ ] Confirm the entrant and every team member meet the full eligibility rules; appoint a representative if entering as a team.
 - [ ] Join the event on Devpost and select Best Apps and Agents.
 - [ ] Provide the functioning app/test-build URL and clear judge instructions.
-- [ ] Prove a real NVIDIA-model runtime through Nebius; record the exact models used.
+- [x] Record real NVIDIA-model runtime through Nebius: Nano capture and Super task briefs ran on Token Factory on October 13. See the [redacted evidence](evidence/daily-live-2026-10-13.json).
 - [x] Publish the complete repository with a detectable open source license and runnable README.
-- [ ] Explain the problem, audience, workflow, model roles, and actual Nebius service use.
+- [x] Draft the problem, audience, workflow, model roles, and actual Nebius service use in the [submission copy](submission.md).
 - [ ] Upload a public YouTube demonstration shorter than three minutes. Show the app functioning and its live model integration.
 - [ ] Supply useful feedback based on services actually tried, using the [feedback log](feedback.md).
 - [ ] If any work predates August 26, 2026, explain the significant changes made during the submission period.
@@ -30,10 +30,10 @@ The event uses an initial pass/fail viability check, followed by four equally we
 
 | Criterion | Ripple's strongest proof | Weakness to fix before recording |
 | --- | --- | --- |
-| Technological implementation | Incident extraction → structured alternatives → independent checks → approved handoff; live NVIDIA/Nebius records and one meaningful Tavily path. | A polished timeline with only fixtures; a provider badge with no successful call; an LLM approving its own unchecked plan. |
-| Design | An organizer sees what changed, what stayed valid, and whom to notify; recovery and rejection states are as clear as success. | Unexplained numbers, hidden constraints, disabled controls presented as features, or an ambiguous demo/live state. |
-| Potential impact | One specific event disruption, a usable repair, and a handoff that another volunteer can act on. | Unsupported time-saving claims or a broad “for every team” audience. |
-| Quality of the idea | Repair an existing commitment with small, inspectable changes; compare alternatives and explain when no safe repair exists. | A general event chatbot or text generation detached from the run of show. |
+| Technological implementation | Live Nano capture → reviewed task drafts → independently checked day plan → reviewed recovery; Super turns a selected task into starting steps. Add Tavily evidence only after a real research request. | Treating a valid schema as proof of useful model output, or presenting mocks and container builds as provider execution. |
+| Design | Start with a task name and estimate, see work around fixed commitments, and review changed times and unfinished minutes before applying a recovery. | Hiding overflow, implying a passed time block is completed work, or leaving the assistance mode unclear. |
+| Potential impact | A freelancer enters a realistic day, loses time and can decide what to do or defer without extending the chosen stop time. | No observed user trial yet; intended usefulness is not measured time saving or productivity. |
+| Quality of the idea | Combine low setup, explicit unfinished work and minute accounting in a reviewable recovery workflow. Explain the tradeoffs in a real changed day. | Claiming a new product category, global scheduling optimality, or an advantage over other planners without evidence. |
 
 ## Honest evidence ledger
 
@@ -41,31 +41,32 @@ Fill in the evidence column only after observing the behavior on the final revis
 
 | Item | Evidence needed before making a claim |
 | --- | --- |
-| Local application | The [October 12 validation record](validation.md) documents passing local and CI tests, GitHub Pages deployment, and a fresh-browser walkthrough. The public demo is labeled as local simulation. |
-| Nano extraction | Redacted successful runtime, actual model ID, input incident, parsed result. |
-| Super repair | Successful runtime tied to alternatives that the independent validator accepted. |
-| Ultra escalation | A difficult case that actually routed to the configured model; otherwise list it as configured or planned, not demonstrated. |
-| Tavily | Real API request within the workflow, returned source URLs, and retrieval time. |
-| Serverless Endpoint | Deployment identifier, healthy HTTPS URL, and completed app request. |
-| Serverless Job | Job identifier, terminal completion status, and its useful output. |
+| Daily application | Revision `264fdc3` passed CI, Pages deployment, 10 public daily browser cases and the public smoke check. The [validation record](validation.md) identifies each result and its scope. Local planning needs no connected service. |
+| Nano capture | Real inputs, returned model identity, structured drafts and failures are in the October 13 [redacted record](evidence/daily-live-2026-10-13.json). Draft review and preservation of original context remain necessary. |
+| Super task brief | Real selected-task requests and returned steps are recorded. Human review found and prompted fixes for budget and context problems; structural checks are not semantic proof. |
+| Tavily research | Pending: a real explicit research request, retrieved source URLs and the resulting source-linked brief. Mock tests do not qualify as runtime evidence. |
+| Serverless Endpoint | The image is built and checked, but no Ripple Endpoint has been deployed. Cloud sign-in succeeded but returned no accessible tenant. Claim deployment only with an actual resource and completed app request. |
+| Serverless Jobs and Ultra | Implemented only for the retained event workflow and not runtime-verified. They are not part of the daily assistance path. |
 | Reliability or cost | Test-set description and raw measured results; distinguish estimates from provider-reported usage. |
 | Human benefit | Observed user trial or measured task comparison; otherwise describe intended benefit. |
 
-## Product acceptance checklist
+## Daily product acceptance checklist
 
-- [ ] A disruption changes the intended sessions and affected handoff recipients.
-- [ ] The validator checks the original session set, valid times, durations, room conflicts, relevant people/resource conflicts, and the hard constraints actually supported.
-- [ ] The single-track scope is visible. Activities before the repair-from time stay fixed; future activities cannot move into the past.
-- [ ] No session disappears or duplicates while making the plan look feasible.
-- [ ] Infeasible input returns a blocked explanation; the app does not silently loosen requirements.
-- [ ] The chosen alternative is validated again before approval against the current plan.
-- [ ] Exports match the approved alternative and include its provenance and operating mode.
-- [ ] Drafts stay local until the organizer intentionally sends them through a separate channel.
-- [ ] Provider failures, malformed model output, and unavailable models are visible and recoverable.
-- [ ] Search content cannot change tool permissions or establish that a supplier is available.
-- [ ] No provider key appears in frontend assets, browser storage, logs, exports, or the video.
+Recheck these on the exact build and inputs used for the final recording. Automated coverage is linked in the validation record; a checked test suite does not replace this rehearsal.
 
-Use “lowest-disruption among the evaluated plans” unless exhaustive search or an optimizer proves a global minimum. Use “checks the supported constraints” rather than a blanket claim of correctness or safety.
+- [ ] Start with an empty workspace; add tasks and fixed commitments without loading the sample.
+- [ ] Preview a plan without changing saved work; apply only after reviewing times and overflow.
+- [ ] Account for every unfinished task minute as either scheduled work or explicit overflow.
+- [ ] Preserve fixed commitments, working hours, same-day time deadlines, prerequisites and the supported break/splitting rules. Report existing commitment conflicts.
+- [ ] Recover from lost time, a longer task, urgent work and an earlier stop; show the actual changes and any unfinished work.
+- [ ] Keep completion explicit. A timer ending or a scheduled block passing must not mark a task done.
+- [ ] Reject invalid edits, imports and stale proposals without losing the saved workspace; demonstrate history or undo.
+- [ ] Check that text, ICS and backup exports match the current workspace and selected day.
+- [ ] Show live capture and task-brief review, accurate mode labels, visible failures, and no task changes before approval.
+- [ ] If demonstrating research, verify that citations match retrieved sources and review whether the sources support the steps.
+- [ ] Inspect final screenshots, video, exports and submission artifacts for credentials and private task details.
+
+Use “one of the evaluated plans” unless an optimizer proves a global best. Describe checks for the supported constraints, rather than a blanket guarantee of correctness. The earlier single-track event checks remain in their own tests and documentation.
 
 ## Bonus awards and feedback
 

@@ -48,13 +48,13 @@ That design may help people trust and act on a revised day, but this remains a h
 
 | Item | Current evidence and remaining work |
 | --- | --- |
-| Public app | [GitHub Pages](https://aaravsinhaofficial.github.io/ripple/) serves the daily MVP. Revision `791aaf8` passed CI and 9 public daily browser checks plus the public smoke check. |
-| Public source | [Repository](https://github.com/aaravsinhaofficial/ripple) includes setup instructions and an MIT license. Record the final commit. |
+| Public app | [GitHub Pages](https://aaravsinhaofficial.github.io/ripple/) serves the daily MVP. Revision [`264fdc3`](https://github.com/aaravsinhaofficial/ripple/commit/264fdc3) [deployed successfully](https://github.com/aaravsinhaofficial/ripple/actions/runs/38358458374), then passed 10 public daily browser checks and the public smoke check. The local HTTP-service case was excluded; no provider calls were made. |
+| Public source | [Repository](https://github.com/aaravsinhaofficial/ripple) includes setup instructions and an MIT license. Current verified revision: `264fdc3`; update this record if the submitted build changes. |
 | Core daily workflow | Implemented and browser-tested: capture, edit, plan, recover, review/apply, completion, recurrence, history and exports. See the [validation record](validation.md). |
-| Local correctness | 137 frontend tests, 23 browser workflows, 23 retained event-contract cases and the production build passed for v0.3.0; the live-integration update passes 163 Python tests, including 41 daily-service and 34 harness cases. Provider tests use mocks or the local rules service. |
+| Automated correctness | [CI on `264fdc3`](https://github.com/aaravsinhaofficial/ripple/actions/runs/38358458404) passed 146 frontend tests, 171 Python tests, 24 browser workflows, 23 retained event-contract cases and the production build. Provider tests use mocks or the local rules service. Connection checks validate the app access code without submitting task data or using provider allowance. |
 | NVIDIA on Nebius | Real Nano and Super calls verified October 13, including two browser/API runs. [Evidence and limitations](validation.md#real-daily-assistance--october-13-2026). |
 | Tavily | Pending real search. Show the explicit user action, retrieved sources and accepted source-linked brief. |
-| Nebius infrastructure | Templates are prepared. No Endpoint or Job deployment is claimed without a completed workload and actual resource evidence. |
+| Nebius infrastructure | The [`264fdc3` Linux AMD64 container build](https://github.com/aaravsinhaofficial/ripple/actions/runs/38358467887) passed its isolated demo check, and the downloaded image archive's checksum was verified. Cloud sign-in succeeded but returned no accessible tenant. No Ripple Endpoint or Job has been deployed; an image build is not Cloud runtime evidence. |
 | Public video | Pending. Use the [under-three-minute storyboard](demo-script.md). |
 | User feedback | Pending. Record observed friction and usefulness, not invented impact. |
 

@@ -63,12 +63,12 @@ Set the private `.env` values:
 ```dotenv
 RIPPLE_MODE=live
 NEBIUS_API_KEY=your-private-key
-RIPPLE_ACCESS_TOKEN=your-random-organizer-token
+RIPPLE_ACCESS_TOKEN=your-random-app-access-code
 RIPPLE_ENABLE_ULTRA=false
 RIPPLE_ENABLE_TAVILY=false
 ```
 
-Generate an organizer token with `python -c 'import secrets; print(secrets.token_urlsafe(32))'`. This is an app token distinct from all provider keys. Live API routes require it. In Ripple's connection dialog, enter the API origin and organizer token; keep the token in session memory only. The connection check calls public `/health`, then authenticated `GET /api/session` for live or protected services; a rejected app token cannot produce a successful connection. Neither check makes a provider call or consumes the live-attempt allowance. Restart the API after edits. Configure `RIPPLE_ALLOWED_ORIGINS` to exactly the local UI origins or the final GitHub Pages origin (for example `https://you.github.io`, without the repository path).
+Generate an app access token with `python -c 'import secrets; print(secrets.token_urlsafe(32))'`. This is an app token distinct from all provider keys. Live API routes require it. In Ripple's connection dialog, enter the API origin and this token in **Access code**; keep the token in session memory only. The connection check calls public `/health`, then authenticated `GET /api/session` for live or protected services; a rejected app token cannot produce a successful connection. Neither check makes a provider call or consumes the live-attempt allowance. Restart the API after edits. Configure `RIPPLE_ALLOWED_ORIGINS` to exactly the local UI origins or the final GitHub Pages origin (for example `https://you.github.io`, without the repository path).
 
 For a hosted deployment, set the public `VITE_RIPPLE_API_URL` build variable to the HTTPS API origin. It only prefills the connection dialog; it does not connect or send task data automatically. The GitHub Pages workflow reads this URL from the repository variable `RIPPLE_API_URL`. App tokens remain private and are entered in the browser only for the current session. Never create a Vite or repository variable containing a provider key or app token.
 
@@ -97,7 +97,7 @@ docker push YOUR_REGISTRY/ripple:1
 
 Create a SecretStash secret with payload keys `NEBIUS_API_KEY`, `RIPPLE_ACCESS_TOKEN`, `RIPPLE_WORKER_TOKEN` (a different random token), and `TAVILY_API_KEY` (empty when disabled, or omit that mapping from the deployment script). Use a public image, a same-project Nebius Container Registry, or configure private registry credentials with `--registry-secret` as documented. [Endpoint secret/registry options](https://docs.nebius.com/serverless/endpoints/manage)
 
-Inspect `infra/deploy-endpoint.sh`, set `RIPPLE_IMAGE`, `NEBIUS_SUBNET_ID`, `RIPPLE_SECRET_SELECTOR`, and `RIPPLE_WEB_ORIGIN`, then run it when deployment is authorized. It creates a **billable** CPU Endpoint. It uses application-level auth so browser OPTIONS preflight remains unauthenticated; mutation routes still require the organizer token. No static public IP is requested. Copy the managed HTTPS URL from `nebius ai endpoint get ENDPOINT_ID --format json` or the console into the UI connection dialog.
+Inspect `infra/deploy-endpoint.sh`, set `RIPPLE_IMAGE`, `NEBIUS_SUBNET_ID`, `RIPPLE_SECRET_SELECTOR`, and `RIPPLE_WEB_ORIGIN`, then run it when deployment is authorized. It creates a **billable** CPU Endpoint. It uses application-level auth so browser OPTIONS preflight remains unauthenticated; protected API routes still require the app token. No static public IP is requested. Copy the managed HTTPS URL from `nebius ai endpoint get ENDPOINT_ID --format json` or the console into the UI connection dialog.
 
 The container runs one Uvicorn process and one SQLite queue. It survives Python process restarts while its disk exists. Do not assume data persists across endpoint recreation or cloud disk lifecycle changes. For a production deployment use a backed-up persistent volume or managed database, retention/access controls, and proper user identity. This hackathon API uses one shared app access token, not per-user accounts or a multi-tenant identity system.
 
@@ -113,7 +113,7 @@ GET  /api/jobs/{id}            → {id,status,createdAt,result,error}
 status: queued | running | completed | failed
 ```
 
-These routes use the same organizer token as `/api/repair`. Polling does not consume the repair-rate limit. IDs are cryptographically random; entries expire after 24 hours by default.
+These routes use the same app token as `/api/repair`. Polling does not consume the repair-rate limit. IDs are cryptographically random; entries expire after 24 hours by default.
 
 `RIPPLE_INLINE_JOBS=true` processes jobs inside the API. To demonstrate real Nebius Jobs instead, set it **false on the Endpoint**, and give the API and worker the same distinct private `RIPPLE_WORKER_TOKEN`. The worker also receives provider credentials through SecretStash. Set `RIPPLE_WORKER_API_URL` to the API HTTPS origin. Then review and run `infra/run-job.sh`; this creates one **billable** finite CPU Job. Its authenticated `/api/worker/claim` and completion calls move requests/results between machines. SQLite is not mounted across containers. An independent validation pass checks worker results before accepting them.
 
