@@ -8,6 +8,18 @@ Google Calendar and Google Tasks use Google's browser OAuth flow. Notion, Granol
 
 ## Enable the private backend
 
+For a local connector trial with no model credentials or calls, first install the frontend and Python dependencies described in the README. Run the following in one terminal from the repository root:
+
+```bash
+RIPPLE_MODE=demo RIPPLE_ACCESS_TOKEN='' NEBIUS_API_KEY='' TAVILY_API_KEY='' \
+NOTION_API_TOKEN='' RIPPLE_ENABLE_TAVILY=false RIPPLE_ENABLE_ULTRA=false \
+RIPPLE_PUBLIC_API_URL=http://127.0.0.1:8000 \
+RIPPLE_ALLOWED_ORIGINS=http://127.0.0.1:5173,http://localhost:5173 \
+.venv/bin/python -m uvicorn server.app:app --host 127.0.0.1 --port 8000
+```
+
+In another terminal, run `VITE_RIPPLE_API_URL=http://127.0.0.1:8000 npm run dev` and open `http://127.0.0.1:5173`. Choose **Connections & imports → Notion, Granola, or Otter → Connect Ripple service → Connect service**; the local URL is filled in and the access code is blank for this loopback-only trial. Choose **Open connections & imports**, select the provider, then **Check connection → Connect**. The provider will ask you to sign in and authorize. It may reject a local callback under its own policy; a deployed HTTPS backend is required in that case. These commands leave the private `.env` file unchanged. Stop each terminal with Ctrl+C when finished.
+
 Set these server environment variables; restart the API after changing them:
 
 ```dotenv

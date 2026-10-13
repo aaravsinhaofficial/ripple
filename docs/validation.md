@@ -8,6 +8,10 @@ The release working tree passed **200 frontend tests**, **203 Python tests**, **
 
 Browser checks cover reviewed calendar imports becoming protected planning time, repeat-import deduplication, explicit changed-item selection, atomic rejection of malformed input, preserved task completion, History undo, CSV column mapping, and explicit action items from notes. Synthetic Google and MCP flows verify pagination, temporary credential isolation, popup origin/source checks, and cancellation of an in-flight authorization. ICS tests include recurrence exceptions, timezone conversion, second rounding and ambiguous clock changes.
 
+Revision [`00b96e4`](https://github.com/aaravsinhaofficial/ripple/commit/00b96e4) passed [GitHub Actions verification](https://github.com/aaravsinhaofficial/ripple/actions/runs/38445039311) and [deployed to Pages](https://github.com/aaravsinhaofficial/ripple/actions/runs/38445039176). The published site then passed **19 daily/connector browser cases**, with the local HTTP-service case skipped, plus the public smoke check. Account flows in those public browser cases still use fixtures. The real local frontend-to-API session and provider readiness check also passed without starting provider authorization.
+
+The updated [Linux AMD64 image workflow](https://github.com/aaravsinhaofficial/ripple/actions/runs/38445090418) passed its network-disabled demo check. The downloaded archive's checksum was verified; image identity is `sha256:bd3e1844b98d456f325cd22a046ff7f3c396226580f17733f336222e8b784f29`. This image includes the connector backend. It has not been deployed to Nebius Cloud.
+
 These checks made no paid calls and imported no private account data. File imports work without external setup. Google requires a public OAuth client ID and user consent; Notion, Granola and Otter require the private connector service and separate provider consent. Real account authorization and selected-document compatibility remain unverified. [Setup and evidence boundary](connectors.md).
 
 ## Hosted connection readiness — October 13, 2026
