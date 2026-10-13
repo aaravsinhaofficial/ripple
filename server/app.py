@@ -160,6 +160,8 @@ def create_app(settings: Settings | None = None, service: RepairService | None =
         if payload.result:
             if payload.result.mode != settings.mode:
                 raise HTTPException(status_code=422, detail="Worker mode does not match the API mode.")
+            if request.confirmedChange is not None and any(getattr(request.confirmedChange, field) != getattr(payload.result.interpretation, field) for field in ("kind", "targetId", "minutes")):
+                raise HTTPException(status_code=422, detail="The worker result changed the organizer's confirmed change.")
             for option in payload.result.options:
                 if failure_details(validate(request.plan, option.sessions, payload.result.interpretation)):
                     raise HTTPException(status_code=422, detail="The worker result failed independent schedule validation.")

@@ -107,4 +107,4 @@ export interface RepairResult {
   sources?: Source[]
 }
 
-export interface RepairRequest { plan: EventPlan; disruption: string }
+export interface RepairRequest { plan: EventPlan; disruption: string; confirmedChange?: Interpretation }

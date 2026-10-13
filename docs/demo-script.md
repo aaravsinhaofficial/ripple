@@ -6,7 +6,7 @@ Target runtime: **2:50**, leaving a margin below three minutes. This is a record
 
 - Use the fictional single-track Fieldnotes Community Day plan and reset between takes. Show the repair-from time so the audience understands which activities can still change.
 - Use a fresh browser session with the final app URL and exact revision intended for judging.
-- Prepare “Maya is running 40 minutes late for her keynote.” Verify the proposed repairs before recording; do not narrate numbers from a different run.
+- Choose **Describe in words** and prepare “Maya is running 40 minutes late for her keynote.” This path demonstrates Nano interpretation followed by Super planning. The simpler guided form supplies an exact organizer-confirmed change and intentionally skips Nano. Verify repairs before recording; do not narrate numbers from a different run.
 - Have a real, relevant Tavily venue-search case ready if claiming that integration. An Assembly Hall closure may be useful because its large, fixed activities cannot simply move into the smaller studio. Confirm the final run is infeasible and actually invokes search; the ordinary Workshop Studio closure can be repaired without search.
 - Prepare a redacted runtime record showing the actual model, provider, stages, and validator results. Hide secrets and account details.
 - Use voice and screen capture; add captions. Avoid third-party music or assets unless licensed.
@@ -15,7 +15,7 @@ Target runtime: **2:50**, leaving a margin below three minutes. This is a record
 
 | Time | Show | Narration |
 | --- | --- | --- |
-| 0:00–0:15 | The event timeline with fixed commitments visible. | “An event plan works until the day changes. A late speaker can affect a room, the next session, and several volunteers. Ripple helps the organizer repair the plan and prepare the handoff.” |
+| 0:00–0:15 | Briefly show Create event and the editable agenda, then the timeline with fixed commitments. | “Enter your own event, or try the sample. When a speaker is late or a session runs long, Ripple helps repair the schedule and prepare the handoff.” |
 | 0:15–0:35 | Enter the keynote delay and start the workflow. | “Maya is forty minutes late. I enter the incident against the existing run of show. The workflow first turns that sentence into a bounded change.” |
 | 0:35–1:00 | Live stages complete; open the execution detail. | After verification: “Nemotron Nano interprets the incident through Nebius Token Factory. Super proposes repairs. Code checks those proposals against the event's recorded constraints.” Name the actual models shown by the run. |
 | 1:00–1:25 | Two alternatives and their exact timeline differences. | “I can see which sessions move, the disruption score, and the tradeoff. This is the lowest-disruption result among the plans evaluated.” If only one valid plan exists, explain that instead of implying two. |
@@ -32,7 +32,7 @@ Ultra is a conditional escalation. Mention it as executed only if the captured r
 
 ## If live access is still pending
 
-Record a clearly labeled development preview with this replacement line: “This preview uses Ripple's local deterministic demo. The Nebius and Tavily paths are implemented for later credentialed testing; live runtime is not demonstrated here.”
+Record a clearly labeled development preview with this replacement line: “This preview uses Ripple's local rule-based planner. It works with your own events without an account. The Nebius and Tavily paths are implemented for later credentialed testing; live runtime is not demonstrated here.”
 
 That preview is useful for reviewing the product, but it does not prove the required Nebius/NVIDIA runtime for the final submission. Finish account setup and runtime verification before using it as the sole integration evidence.
 

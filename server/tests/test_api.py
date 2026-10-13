@@ -117,3 +117,41 @@ def test_remote_worker_result_round_trip(settings, payload):
         assert completed.status_code == 200
         assert client.get(created["pollUrl"]).json()["result"]["options"]
         assert client.post("/api/worker/claim", headers=worker).json()["job"] is None
+
+
+@pytest.mark.parametrize("field,value", [("targetId", "conversation"), ("minutes", 1), ("kind", "duration")])
+def test_worker_cannot_weaken_or_replace_confirmed_change(settings, payload, field, value):
+    settings = replace(settings, worker_token="private-worker")
+    payload["confirmedChange"] = {"kind": "delay", "targetId": "showcase", "minutes": 20, "description": "Delay the selected showcase."}
+    with TestClient(create_app(settings)) as client:
+        created = client.post("/api/jobs", json=payload).json()
+        worker = {"Authorization": "Bearer private-worker"}
+        claim = client.post("/api/worker/claim", headers=worker).json()["job"]
+        assert claim["request"]["confirmedChange"] == payload["confirmedChange"]
+        result = client.post("/api/repair", json=payload).json()
+        assert result["options"]
+        for option in result["options"]:
+            by_id = {s["id"]: s for s in option["sessions"]}
+            assert by_id["showcase"]["start"] >= 900 and by_id["conversation"]["start"] == 690
+        result["options"] = []  # Even a no-option response may not replace the confirmed incident.
+        result["interpretation"][field] = value
+        rejected = client.post(f"/api/worker/{claim['id']}/complete", headers=worker, json={"leaseToken": claim["leaseToken"], "result": result})
+        assert rejected.status_code == 422 and "confirmed" in rejected.json()["detail"]
+        assert client.get(created["pollUrl"]).json()["status"] == "running"
+
+
+def test_confirmed_api_rejects_unknown_target_and_ongoing_repair_round_trips(settings, payload):
+    settings = replace(settings, worker_token="private-worker")
+    payload["plan"]["asOf"] = 810
+    payload["confirmedChange"] = {"kind": "duration", "targetId": "missing", "minutes": 25, "description": "Extend the selected activity."}
+    with TestClient(create_app(settings)) as client:
+        assert client.post("/api/repair", json=payload).status_code == 422
+        payload["confirmedChange"]["targetId"] = "build"
+        created = client.post("/api/jobs", json=payload).json()
+        worker = {"Authorization": "Bearer private-worker"}
+        claim = client.post("/api/worker/claim", headers=worker).json()["job"]
+        result = client.post("/api/repair", json=payload).json()
+        assert result["interpretation"] == payload["confirmedChange"] and result["options"]
+        completed = client.post(f"/api/worker/{claim['id']}/complete", headers=worker, json={"leaseToken": claim["leaseToken"], "result": result})
+        assert completed.status_code == 200
+        assert client.get(created["pollUrl"]).json()["result"]["interpretation"] == payload["confirmedChange"]

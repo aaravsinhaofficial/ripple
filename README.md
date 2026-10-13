@@ -2,7 +2,7 @@
 
 **Keep the day moving.** Constraint-checked schedule repair for people running community events.
 
-[Try the demo](https://aaravsinhaofficial.github.io/ripple/) · [Live setup](docs/deployment.md) · [Hackathon submission](docs/submission.md) · [MIT license](LICENSE)
+[Open Ripple](https://aaravsinhaofficial.github.io/ripple/) · [Live AI setup](docs/deployment.md) · [Hackathon submission](docs/submission.md) · [MIT license](LICENSE)
 
 [![Verify](https://github.com/aaravsinhaofficial/ripple/actions/workflows/ci.yml/badge.svg)](https://github.com/aaravsinhaofficial/ripple/actions/workflows/ci.yml)
 
@@ -14,7 +14,9 @@ Ripple turns that disruption into a repair you can inspect: what moves, what sta
 
 ## Project status
 
-The public GitHub Pages app includes a **local, deterministic demo**. It works without an account and labels its results as demo output. The repository also contains the live NVIDIA Nemotron / Nebius Token Factory service and optional Tavily resource search integration. **Live provider calls and Nebius Cloud deployment still require accounts, credentials, and runtime verification.** This is not yet a completed hackathon submission.
+The public GitHub Pages app includes a **working local planner for your own events**, alongside a clearly identified fictional sample. Create an event in the built-in editor, select an exact activity or room, compare checked repairs, and approve a change. Download the current schedule, calendar file, or contextual handoff drafts. No account or JSON editing is required.
+
+The local planner uses deterministic scheduling rules, not an AI model. The repository also contains the NVIDIA Nemotron / Nebius Token Factory service and optional Tavily search integration. **Live provider calls and Nebius Cloud deployment still require accounts, credentials, and runtime verification.** This is not yet a completed hackathon submission.
 
 No API keys belong in the frontend or this repository. GitHub Pages hosts static assets; the live service is deployed separately.
 
@@ -29,7 +31,7 @@ npm run dev
 
 Open the local URL printed by Vite. Try a disruption, inspect the alternatives, apply a repair, and export the handoffs. Use the app's connection settings to point it at a separately running backend.
 
-To use your own schedule, follow [Bring your own event](docs/event-format.md). The sample JSON can be downloaded, edited, and imported from the schedule menu.
+Choose **Create event** to enter your day and agenda, then use **Choose a change** for a delay, room closure, or extra session time. **Edit event** changes the underlying commitments. See [Bring your own event](docs/event-format.md) for the everyday workflow and optional JSON import.
 
 ```sh
 npm test
@@ -41,14 +43,16 @@ Backend installation, credentials, allowed origins, and Nebius deployment are co
 
 ## How it works
 
-1. **Interpret:** Nemotron Nano converts an incident into a bounded, structured change.
+1. **Choose or interpret:** The guided form identifies the exact activity/room and change. In connected live mode, Nemotron Nano interprets freeform prose; guided inputs skip that unnecessary model call.
 2. **Propose:** Nemotron Super proposes schedule repairs. Ultra is reserved for difficult cases that fail validation.
-3. **Check:** Deterministic code checks identities, durations, locked sessions, rooms, people, capacity, buffers, and the event boundary. The repair-from time protects activities that have already begun. Invalid plans are never presented as feasible.
+3. **Check:** Deterministic code checks identities, durations, locked sessions, rooms, people, capacity, buffers, and the event boundary. The repair-from time protects activities that have begun. An unlocked ongoing activity can be extended while preserving its start, room, and owner. Completed activities stay fixed. Invalid plans are never presented as feasible.
 4. **Compare:** See changes and tradeoffs before applying the lowest-disruption option among those evaluated. We do not claim global optimality.
 5. **Handoff:** Prepare targeted action cards. Applying a repair updates the local schedule; it does not send messages.
 6. **Find resources when relevant:** Tavily can discover resource-replacement leads. Search results are evidence to review, not confirmed availability.
 
-The demo uses a browser-local parser and bounded schedule search instead of model calls. Both paths make the mode visible. A failed live request is surfaced as an error, rather than silently replaced with demo output.
+The local planner uses the confirmed form fields or a browser-local text parser, then bounded schedule search. Both operating modes are visible. A failed live request is surfaced as an error, rather than silently replaced with rule-based output.
+
+Plans, up to six recent events, and each event's latest 12 repairs stay in browser storage. They are not synced between devices. Export event JSON for a reusable backup. Storage failures are shown visibly while the open plan remains downloadable.
 
 ## Technology
 

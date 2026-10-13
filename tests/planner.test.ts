@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { SAMPLE_PLAN, EXAMPLE_DISRUPTIONS, clonePlan } from '../src/lib/data';
-import { exportHandoff, interpretDisruption, parseImportedPlan, repairPlan, validateCandidate } from '../src/lib/planner';
-import type { Interpretation, Session } from '../src/lib/types';
+import { exportHandoff, interpretDisruption, parseImportedPlan, repairInterpretedPlan, repairPlan, validateCandidate } from '../src/lib/planner';
+import type { EventPlan, Interpretation, Session } from '../src/lib/types';
 
 const baseline: Interpretation = {kind: 'unknown', targetId: null, minutes: 0, description: 'Baseline validation'};
 const valid = (sessions: Session[], interpretation = baseline) => validateCandidate(SAMPLE_PLAN, sessions, interpretation).every(check => check.passed);
@@ -61,12 +61,175 @@ describe('real repairs preserve the organizer’s commitments', () => {
   it('exports actual changed sessions with explicit simulation provenance', () => {
     const result = repairPlan(SAMPLE_PLAN, 'Maya is 40 minutes late');
     const output = exportHandoff(SAMPLE_PLAN, result, result.options[0]);
-    expect(output).toContain('DEMO MODE');
+    expect(output).toContain('RULE-BASED PLAN');
     expect(output).toContain('no AI model was called');
     expect(output).toContain('nothing has been sent');
     expect(output).toContain('Maya');
     expect(output).toContain('PROPOSAL ONLY');
     expect(exportHandoff(SAMPLE_PLAN, result, result.options[0], true)).toContain('APPROVED LOCALLY');
+  });
+});
+
+describe('guided repairs use the exact selected IDs', () => {
+  it('repairs the selected custom activity despite colliding titles and owner names', () => {
+    const plan = clonePlan(SAMPLE_PLAN);
+    const first = plan.sessions.find(session => session.id === 'keynote')!;
+    const second = plan.sessions.find(session => session.id === 'workshop')!;
+    first.id = 'custom:activity|one';
+    second.id = 'custom:activity|two';
+    first.title = second.title = 'Shared session';
+    first.notes = second.notes = 'Shared session';
+    plan.people[0].name = plan.people[1].name = 'Alex Gray';
+    const before = JSON.stringify(plan);
+    const change: Interpretation = { kind: 'delay', targetId: second.id, minutes: 10, description: 'The selected activity is delayed by ten minutes.' };
+    const result = repairInterpretedPlan(plan, change, 'The shared session is late; this ambiguous note must not select a different ID.');
+    expect(result.options.length).toBeGreaterThan(0);
+    expect(result.interpretation.targetId).toBe(second.id);
+    for (const option of result.options) {
+      expect(option.sessions.find(session => session.id === second.id)!.start).toBeGreaterThanOrEqual(second.start + 10);
+      expect(option.sessions.find(session => session.id === first.id)!.duration).toBe(first.duration);
+      expect(validateCandidate(plan, option.sessions, change).every(check => check.passed)).toBe(true);
+    }
+    expect(JSON.stringify(plan)).toBe(before);
+    expect(result.interpretation).not.toBe(change);
+  });
+
+  it('closes only the selected room when two custom rooms have the same name', () => {
+    const plan = clonePlan(SAMPLE_PLAN);
+    plan.rooms[0].name = plan.rooms[1].name = 'Meeting Room';
+    plan.rooms[0].id = 'space-001';
+    plan.rooms[1].id = 'space-002';
+    plan.sessions.forEach(session => { session.roomId = session.roomId === 'hall' ? 'space-001' : 'space-002'; });
+    const result = repairInterpretedPlan(plan, { kind: 'room', targetId: 'space-002', minutes: 0, description: 'The selected room is unavailable.' });
+    expect(result.options.length).toBeGreaterThan(0);
+    for (const option of result.options) {
+      expect(option.sessions.every(session => session.roomId === 'space-001')).toBe(true);
+      expect(option.sessions.find(session => session.id === 'welcome')).toEqual(plan.sessions.find(session => session.id === 'welcome'));
+    }
+  });
+
+  it.each([
+    { kind: 'delay', targetId: 'missing', minutes: 10, description: 'Missing session' },
+    { kind: 'room', targetId: 'missing', minutes: 0, description: 'Missing room' },
+    { kind: 'duration', targetId: 'build', minutes: -10, description: 'Invalid duration' },
+    { kind: 'delay', targetId: 'keynote', minutes: 1.5, description: 'Fractional minutes' },
+  ] satisfies Interpretation[])('rejects invalid structured input without substituting a target: $description', change => {
+    const result = repairInterpretedPlan(SAMPLE_PLAN, change);
+    expect(result.options).toHaveLength(0);
+    expect(result.blockers.length).toBeGreaterThan(0);
+    expect(result.summary).not.toBe('No schedule changes are needed.');
+  });
+
+  it('keeps the natural-language API as interpretation followed by the exact-target path', () => {
+    const text = 'Maya is 40 minutes late';
+    const interpreted = interpretDisruption(SAMPLE_PLAN, text);
+    const direct = repairInterpretedPlan(SAMPLE_PLAN, interpreted, text);
+    const existing = repairPlan(SAMPLE_PLAN, text);
+    expect(existing.interpretation).toEqual(direct.interpretation);
+    expect(existing.options).toEqual(direct.options);
+  });
+
+  it('extends an ongoing unlocked activity in place and repairs only future activities', () => {
+    const plan = { ...clonePlan(SAMPLE_PLAN), asOf: 810 };
+    const result = repairInterpretedPlan(plan, { kind: 'duration', targetId: 'build', minutes: 25, description: 'Build needs extra time.' });
+    expect(result.options.length).toBeGreaterThan(0);
+    for (const option of result.options) {
+      const build = option.sessions.find(session => session.id === 'build')!;
+      expect(build).toEqual({ ...plan.sessions.find(session => session.id === 'build'), duration: 85 });
+      expect(option.sessions.find(session => session.id === 'showcase')!.start).toBeGreaterThanOrEqual(895);
+      for (const session of plan.sessions.filter(session => session.start < plan.asOf && session.id !== 'build')) expect(option.sessions.find(item => item.id === session.id)).toEqual(session);
+      expect(validateCandidate(plan, option.sessions, result.interpretation).every(check => check.passed)).toBe(true);
+      expect(option.changes.find(change => change.sessionId === 'build' && change.field === 'duration')).toBeDefined();
+    }
+    const natural = repairPlan(plan, 'The build session needs 25 more minutes');
+    expect(natural.options.length).toBeGreaterThan(0);
+  });
+
+  it.each([{ asOf: 860, kind: 'duration' as const }, { asOf: 810, kind: 'delay' as const }])('blocks completed extensions and started delays: $kind at $asOf', ({ asOf, kind }) => {
+    const result = repairInterpretedPlan({ ...clonePlan(SAMPLE_PLAN), asOf }, { kind, targetId: 'build', minutes: 25, description: 'Change build.' });
+    expect(result.options).toHaveLength(0);
+    expect(result.blockers.join(' ')).toContain('producer');
+  });
+
+  it('never relaxes a lock or lets an ongoing extension rewrite other fields', () => {
+    const plan = { ...clonePlan(SAMPLE_PLAN), asOf: 810 };
+    const change: Interpretation = { kind: 'duration', targetId: 'build', minutes: 25, description: 'Extend build.' };
+    const option = repairInterpretedPlan(plan, change).options[0];
+    for (const mutation of [{ start: 795 }, { roomId: 'hall' }, { ownerId: 'maya' }]) {
+      const sessions = option.sessions.map(session => session.id === 'build' ? { ...session, ...mutation } : session);
+      expect(validateCandidate(plan, sessions, change).find(check => check.id === 'elapsed')!.passed).toBe(false);
+    }
+    plan.sessions.find(session => session.id === 'build')!.locked = true;
+    const result = repairInterpretedPlan(plan, change);
+    expect(result.options).toHaveLength(0);
+    expect(result.summary).toBe('That activity is locked.');
+  });
+
+  it('explains the exact fixed boundary when an ongoing extension would run into lunch', () => {
+    const result = repairInterpretedPlan({ ...clonePlan(SAMPLE_PLAN), asOf: 700 }, { kind: 'duration', targetId: 'conversation', minutes: 30, description: 'Extend the running conversation.' });
+    expect(result.options).toHaveLength(0);
+    expect(result.blockers.join(' ')).toContain('Lunch, together');
+    expect(result.blockers.join(' ')).toContain('12:40 pm');
+    expect(result.blockers.join(' ')).toContain('fixed');
+  });
+
+  it('explains a locked activity and the actual owner-availability boundary', () => {
+    const locked = repairInterpretedPlan(SAMPLE_PLAN, { kind: 'delay', targetId: 'lunch', minutes: 10, description: 'Lunch is late.' });
+    expect(locked.options).toHaveLength(0);
+    expect(locked.blockers.join(' ')).toContain('Lunch, together');
+    expect(locked.blockers.join(' ')).toContain('revise its lock');
+    const plan = clonePlan(SAMPLE_PLAN);
+    plan.people.find(person => person.id === 'maya')!.availableUntil = 620;
+    const result = repairInterpretedPlan(plan, { kind: 'delay', targetId: 'keynote', minutes: 20, description: 'Maya is late.' });
+    expect(result.options).toHaveLength(0);
+    expect(result.blockers.join(' ')).toContain('Maya Chen is available only until 10:20 am');
+  });
+
+  it('reports a bounded-search miss without calling a feasible cross-boundary repair impossible', () => {
+    const change: Interpretation = { kind: 'delay', targetId: 'keynote', minutes: 200, description: 'The keynote is delayed by 200 minutes.' };
+    const knownFeasible = clonePlan(SAMPLE_PLAN).sessions;
+    const starts: Record<string, number> = { workshop: 570, conversation: 640, showcase: 690, keynote: 800, build: 850 };
+    knownFeasible.forEach(session => { if (starts[session.id] !== undefined) session.start = starts[session.id]; });
+    expect(validateCandidate(SAMPLE_PLAN, knownFeasible, change).every(check => check.passed)).toBe(true);
+    const result = repairInterpretedPlan(SAMPLE_PLAN, change);
+    expect(result.options).toHaveLength(0);
+    expect(result.summary).toBe('No checked repair was found.');
+    expect(result.blockers.join(' ')).toContain('bounded search');
+    expect(result.blockers.join(' ')).toContain('does not prove a repair is impossible');
+    expect(result.blockers.join(' ')).toContain('across');
+  });
+
+  it('handles 36 custom activities within a bounded search and can move an early delayed target', () => {
+    const plan: EventPlan = {
+      ...clonePlan(SAMPLE_PLAN), id: 'custom-36', start: 540, end: 900,
+      rooms: [{ id: 'custom-room', name: 'The Room', capacity: 50, equipment: [] }],
+      people: [{ id: 'custom-owner', name: 'Alex Gray', role: 'Host', initials: 'AG', color: '#aabbcc', availableFrom: 540, availableUntil: 900 }],
+      sessions: Array.from({ length: 36 }, (_, index): Session => ({ id: `slot:${index}`, title: 'Shared activity title', start: 540 + index * 10, duration: 10, roomId: 'custom-room', ownerId: 'custom-owner', attendees: 40, kind: 'session', locked: false, notes: '', requiredEquipment: [], setupMinutes: 0 })),
+    };
+    const change: Interpretation = { kind: 'delay', targetId: 'slot:0', minutes: 60, description: 'The first activity is delayed.' };
+    const started = performance.now();
+    const result = repairInterpretedPlan(plan, change);
+    expect(performance.now() - started).toBeLessThan(2000);
+    expect(result.options.length).toBeGreaterThan(0);
+    for (const option of result.options) {
+      expect(option.sessions).toHaveLength(36);
+      expect(validateCandidate(plan, option.sessions, change).every(check => check.passed)).toBe(true);
+    }
+    const explored = result.trace.find(step => step.id === 'explore')!.detail.match(/Evaluated (\d+)/);
+    expect(Number(explored?.[1])).toBeLessThanOrEqual(240);
+  });
+
+  it('handoff drafts carry full event context and labeled before/after changes', () => {
+    const result = repairInterpretedPlan(SAMPLE_PLAN, { kind: 'delay', targetId: 'keynote', minutes: 40, description: 'The keynote is delayed.' });
+    for (const handoff of result.options[0].handoffs) {
+      expect(handoff.message).toContain(SAMPLE_PLAN.name);
+      expect(handoff.message).toContain(SAMPLE_PLAN.date);
+      expect(handoff.message).toContain(SAMPLE_PLAN.timezone);
+      expect(handoff.message).toContain(SAMPLE_PLAN.venue);
+      expect(handoff.message).toContain('Start time:');
+      expect(handoff.message).toContain('→');
+      expect(handoff.message).toContain('to confirm');
+    }
   });
 });
 

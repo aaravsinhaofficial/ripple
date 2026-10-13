@@ -2,10 +2,17 @@
 
 Ripple supports a single event day with one activity at a time. The group can move between rooms. Parallel conference tracks, overnight programs, replacement-speaker qualifications, and external bookings are outside this version's scope.
 
-1. Open the three-dot **Schedule actions** menu beside “The run of show.” Choose **Download sample JSON**, or start with [community-day.json](../examples/community-day.json).
-2. Edit the event, people, rooms, and sessions in a text editor. Keep the JSON field names and stable IDs. References such as `ownerId` and `roomId` must match a listed person and room.
-3. Choose **Import an event plan** in the same menu. Ripple checks the baseline before replacing the current local plan. Export your current event first if you want to keep it.
-4. Set **Repair from** to the current event time. Activities that have already started cannot move. Describe one disruption, inspect the checked alternatives, then apply a repair.
+1. Choose **Create event**. Enter its name, date, location, day boundaries, and first room's capacity. The time zone defaults to your browser's zone; change it for an event elsewhere.
+2. Choose **Build the agenda**. Add titles, start times, durations, owners, rooms, and attendance. Room and owner names can be reused. Fixed times, setup gaps, equipment, and availability are available when needed. New rooms require a confirmed capacity.
+3. Choose **Save event**. Ripple identifies conflicts before replacing the current plan. **Edit event** changes the source commitments later; saving an edit clears its old repair history. Your previous event stays in **Your events**, including when you create another one. Recent-event storage is limited to six, so export JSON for a long-term backup.
+4. Set **Repair from** to the point from which the schedule may change. Earlier activities are treated as already started. Choose the change, exact activity/room, and number of minutes. Inspect alternatives and checks, then apply the repair. An ongoing unlocked activity can be extended without moving its start, owner, or room. A completed activity cannot be extended.
+5. Copy an approved handoff, **Download schedule**, or **Add to calendar**. The calendar button downloads an `.ics` file to import into your calendar app. It is a snapshot, not a live subscription; no invitations are sent. Date, timezone, venue, and before/after changes accompany handoff drafts.
+
+For unusual changes, use **Describe in words**. The local parser supports one named delay, closure, or duration change; guided controls avoid ambiguity. Live prose interpretation requires a configured model service.
+
+## Optional JSON import
+
+The three-dot **Schedule actions** menu can download a sample, export the current event JSON, or import an existing file. Start with [community-day.json](../examples/community-day.json), preserve its field names and stable IDs, and make sure `ownerId` and `roomId` reference listed people and rooms. Ripple validates the full baseline before importing. JSON is useful for backups and bulk editing; it is not required for everyday use.
 
 ## Essential fields
 
@@ -20,6 +27,8 @@ Ripple supports a single event day with one activity at a time. The group can mo
 
 Use `kind: "session"`, `"break"`, or `"fixed"`; `locked` controls whether an activity can move. The baseline must already fit its time boundaries, capacities, equipment, availability, and setup gaps. Limits are 36 activities, 12 rooms, and 60 people. The live API also limits the serialized request to 64 KiB.
 
-Your active plan stays in this browser's local storage. Undo history lasts for the current session. **Export this event JSON** saves a reusable plan; a handoff download instead saves a readable proposal or approved update. No message is sent by either action.
+Your active plan and latest 12 repairs stay in this browser's local storage. **Your events** switches between recently used plans. **Export this event JSON** saves a reusable backup; a handoff download saves a readable proposal or approved update. Clearing browser storage removes local plans/history. No message is sent by either action.
 
-Connected live mode sends the plan and incident to the configured backend and model provider. Begin with fictional data while testing. The account-free demo performs its repairs locally.
+Connected live mode sends the plan and incident to the configured backend and model provider. Begin with fictional data while testing. The account-free local planner performs repairs on your device.
+
+Calendar export uses UTC timestamps derived from the event's IANA time zone, escaped text, stable activity identities, and folded UTF-8 content lines following [RFC 5545](https://www.rfc-editor.org/rfc/rfc5545). Ambiguous or nonexistent times during daylight-saving clock changes are rejected with guidance; the text export remains available.

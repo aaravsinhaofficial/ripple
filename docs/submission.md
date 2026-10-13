@@ -14,17 +14,17 @@ Ripple focuses on that moment: the day is already planned, something changes, an
 
 ## What it does
 
-The demo starts with Fieldnotes Community Day, a fictional single-track event with two rooms, assigned people, equipment requirements, setup time, and fixed commitments. An organizer enters an incident such as “Maya is running 40 minutes late for her keynote.” Ripple interprets the disruption, evaluates repair alternatives, and shows the changes beside the run of show.
+Organizers create their own event with a normal form and editable agenda, or explore the fictional Fieldnotes Community Day sample. They select the exact activity or room and what changed, or describe an incident such as “Maya is running 40 minutes late for her keynote.” Ripple evaluates repair alternatives and shows the changes beside the run of show. An ongoing unlocked activity can be extended without moving its original start, room, or owner; fixed commitments and completed activities stay protected.
 
-Each proposal carries explicit constraint checks. The organizer compares the alternatives, chooses one, and applies it to the local plan. Targeted handoff drafts explain what changed for each affected person. The organizer controls any communication outside Ripple.
+Each proposal carries explicit constraint checks. The organizer compares alternatives and applies one to the local plan. Targeted handoff drafts include the event date, timezone, venue, and before/after changes. Schedule and calendar exports make the plan portable; recent events and repair history persist on the device. The organizer controls any communication outside Ripple.
 
-The browser demo runs locally without accounts. It is labeled as a deterministic simulation and does not represent an NVIDIA model response.
+The local planner works with user-created events without accounts. Its rule-based mode is explicit and does not represent an NVIDIA model response.
 
 ## How it is built
 
 The frontend uses React and TypeScript and is designed for GitHub Pages. The Python service provides the live orchestration path and keeps provider credentials on the server.
 
-The intended live routing gives Nemotron Nano the bounded extraction task and Nemotron Super the repair-planning task through Nebius Token Factory. Difficult cases can escalate to the configured Ultra model. Deterministic validation checks the proposals independently of the model; rejected proposals do not become feasible merely because a model describes them confidently.
+The intended live routing gives Nemotron Nano the prose-extraction task and Nemotron Super the repair-planning task through Nebius Token Factory. Guided organizer inputs already provide the exact change, so they skip Nano and go straight to Super. Difficult cases can escalate to the configured Ultra model. Deterministic validation checks proposals independently; rejected proposals do not become feasible merely because a model describes them confidently.
 
 The Tavily adapter searches for venue leads when a room closure has no feasible repair. Its results are leads with sources, not confirmed availability or reservations. The optional Nebius Serverless deployment paths separate the request-serving Endpoint from background processing in Jobs.
 
@@ -58,7 +58,7 @@ Do not replace these with invented experience or promotional claims. Record actu
 | Live NVIDIA on Nebius | Not verified; requires an account, credited balance, credentials, and an end-to-end run. |
 | Tavily runtime | Not verified; requires an account, key, and an appropriate search case. |
 | Serverless Endpoint / Job | Do not claim deployment until each workload has run successfully. |
-| Evaluation results | [Local validation](validation.md): 44 frontend tests, 62 Python tests, 15 cross-runtime cases, and 8 browser tests passed; production build passed. Live model evaluation is pending. |
+| Evaluation results | [Local validation](validation.md): 74 frontend tests, 85 Python tests, 23 cross-runtime cases, and 13 browser workflows passed; production build passed. Live model evaluation is pending. |
 | Provider feedback | [Template prepared](feedback.md); actual runtime observations are pending. |
 | User validation | No user-study or time-saving claim is made. |
 

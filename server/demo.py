@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import re
 
-from .constraints import affected_ids, disruption_errors, failure_details, overlap, validate
+from .constraints import affected_ids, disruption_errors, failure_details, ongoing_extension, overlap, validate
 from .models import EventPlan, Interpretation, Session
 
 
@@ -49,12 +49,12 @@ def solve_demo(plan: EventPlan, disruption: Interpretation) -> list[list[Session
     affected = affected_ids(plan, disruption)
     earliest = min((s.start for s in plan.sessions if s.id in affected), default=plan.start) + disruption.minutes
     as_of = plan.asOf if plan.asOf is not None else plan.start
-    locked = [s.model_copy() for s in plan.sessions if s.locked or s.start < as_of]
+    locked = [s.model_copy(update={"duration": s.duration + disruption.minutes}) if ongoing_extension(plan, disruption, s) else s.model_copy() for s in plan.sessions if s.locked or s.start < as_of]
     # A hard lock cannot be relaxed to make a demonstration succeed.
     if any(
         (disruption.kind == "room" and s.roomId == disruption.targetId and s.end > as_of)
         or (disruption.kind == "delay" and s.id in affected and s.start < earliest)
-        or (disruption.kind == "duration" and s.id == disruption.targetId)
+        or (disruption.kind == "duration" and s.id == disruption.targetId and not ongoing_extension(plan, disruption, next(old for old in plan.sessions if old.id == s.id)))
         for s in locked
     ):
         return []

@@ -12,7 +12,7 @@ try {
   const response = await page.goto(url, { waitUntil: 'networkidle' });
   assert.equal(response.status(), 200, 'Published app must return HTTP 200');
   await page.getByRole('heading', { name: 'Keep a good day going.' }).waitFor();
-  await page.getByRole('button', { name: 'Demo mode' }).waitFor();
+  await page.getByRole('button', { name: 'Local planner' }).waitFor();
   const favicon = new URL(await page.locator('link[rel="icon"]').getAttribute('href'), url);
   assert.equal((await page.request.get(favicon.href)).status(), 200, 'Favicon must resolve under the repository path');
   await page.getByRole('button', { name: 'A speaker is running late' }).click();

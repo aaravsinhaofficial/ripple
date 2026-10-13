@@ -9,6 +9,7 @@ export const formatTimeFull = (minutes: number): string => `${formatTime(minutes
 
 const copySessions = (sessions: Session[]): Session[] => sessions.map(session => ({ ...session, requiredEquipment: [...session.requiredEquipment] }))
 const normalized = (text: string): string => text.toLowerCase().replace(/[^a-z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim()
+const ongoingExtension = (plan: EventPlan, interpretation: Interpretation, session: Session): boolean => interpretation.kind === 'duration' && interpretation.targetId === session.id && !session.locked && session.start < (plan.asOf ?? plan.start) && session.start + session.duration > (plan.asOf ?? plan.start)
 
 export function interpretDisruption(plan: EventPlan, text: string): Interpretation {
   const value = normalized(text)
@@ -62,7 +63,7 @@ export function validateCandidate(plan: EventPlan, sessions: Session[], interpre
   const disruption = interpretation.kind === 'delay' && affected.length > 0 && validMinutes
     ? affected.every(item => item.start >= (plan.asOf ?? plan.start)) && affected.every(item => (sessions.find(session => session.id === item.id)?.start ?? -1) >= Math.min(...affected.map(s => s.start)) + interpretation.minutes)
     : interpretation.kind === 'duration' && target && validMinutes
-      ? target.start >= (plan.asOf ?? plan.start) && sessions.find(session => session.id === target.id)?.duration === target.duration + interpretation.minutes
+      ? (target.start >= (plan.asOf ?? plan.start) || ongoingExtension(plan, interpretation, target)) && sessions.find(session => session.id === target.id)?.duration === target.duration + interpretation.minutes
       : interpretation.kind === 'room'
       ? rooms.has(interpretation.targetId ?? '') && sessions.every(session => { const before = original.get(session.id); return !!before && (before.start + before.duration <= (plan.asOf ?? plan.start) || session.roomId !== interpretation.targetId) })
         : interpretation.kind === 'unknown' && interpretation.targetId === null
@@ -71,7 +72,7 @@ export function validateCandidate(plan: EventPlan, sessions: Session[], interpre
     check('event-window', 'The day starts and ends on time', sessions.every(session => Number.isInteger(session.start) && session.start >= plan.start && session.start + session.duration <= plan.end), `${formatTimeFull(plan.start)}–${formatTimeFull(plan.end)} event window.`),
     check('duration', 'Full session durations preserved', sessions.every(session => Number.isInteger(session.duration) && session.duration > 0 && session.duration === (original.get(session.id)?.duration ?? -1) + (interpretation.kind === 'duration' && session.id === interpretation.targetId ? interpretation.minutes : 0)), 'No sessions are silently shortened to make the plan fit.'),
     check('locked', 'Fixed moments stay fixed', sessions.every(session => { const before = original.get(session.id); return !before?.locked || ['start', 'duration', 'roomId', 'ownerId'].every(field => session[field as keyof Session] === before[field as keyof Session]) }), `${plan.sessions.filter(session => session.locked).length} locked activities keep their time, owner, room, and duration.`),
-    check('elapsed', 'Earlier activities stay fixed', sessions.every(session => { const before = original.get(session.id); return !!before && (before.start < (plan.asOf ?? plan.start) ? ['start', 'duration', 'roomId', 'ownerId'].every(field => session[field as keyof Session] === before[field as keyof Session]) : session.start >= (plan.asOf ?? plan.start)) }), `Activities that have begun before ${formatTimeFull(plan.asOf ?? plan.start)} cannot be changed.`),
+    check('elapsed', 'Started activities keep their commitments', sessions.every(session => { const before = original.get(session.id); return !!before && (before.start < (plan.asOf ?? plan.start) ? (ongoingExtension(plan, interpretation, before) ? ['start', 'roomId', 'ownerId'] : ['start', 'duration', 'roomId', 'ownerId']).every(field => session[field as keyof Session] === before[field as keyof Session]) : session.start >= (plan.asOf ?? plan.start)) }), `Only the selected ongoing, unlocked activity may gain time; its start, room, and owner stay fixed. Every other activity begun before ${formatTimeFull(plan.asOf ?? plan.start)} stays unchanged.`),
     check('program-overlap', 'One thing at a time', ordered.every((session, index) => index === 0 || ordered[index - 1].start + ordered[index - 1].duration <= session.start), 'This single-track day never asks the audience to be in two places.'),
     check('setup', 'Time to make the changeover', ordered.every((session, index) => (index === 0 ? plan.start : ordered[index - 1].start + ordered[index - 1].duration) + (session.setupMinutes ?? 0) <= session.start), 'The setup buffer before every activity is preserved.'),
     check('room-capacity', 'Enough room for everyone', sessions.every(session => (rooms.get(session.roomId)?.capacity ?? -1) >= session.attendees), 'All selected spaces meet the activity’s attendance requirement.'),
@@ -92,6 +93,30 @@ function permutations<T>(items: T[], limit = 120): T[][] {
   return result
 }
 
+function repairOrders(items: Session[], targetId: string | null, plan: EventPlan): Session[][] {
+  const orders: Session[][] = []
+  const seen = new Set<string>()
+  const add = (order: Session[]) => {
+    const key = JSON.stringify(order.map(item => item.id))
+    if (!seen.has(key) && orders.length < 120) { seen.add(key); orders.push(order) }
+  }
+  add(items)
+  const target = items.find(item => item.id === targetId)
+  if (target) {
+    const remaining = items.filter(item => item.id !== targetId)
+    // Try every position for the selected activity before spending the bounded
+    // permutation budget. A long unchanged prefix must not trap a late speaker.
+    for (let position = 0; position <= remaining.length; position++) {
+      add([...remaining.slice(0, position), target, ...remaining.slice(position)])
+    }
+  }
+  const people = new Map(plan.people.map(person => [person.id, person]))
+  add([...items].sort((a, b) => (people.get(a.ownerId)?.availableUntil ?? plan.end) - (people.get(b.ownerId)?.availableUntil ?? plan.end) || a.start - b.start))
+  add([...items].sort((a, b) => (people.get(a.ownerId)?.availableFrom ?? plan.start) - (people.get(b.ownerId)?.availableFrom ?? plan.start) || a.start - b.start))
+  for (const order of permutations(items, 120 - orders.length)) add(order)
+  return orders
+}
+
 function scheduleVariants(plan: EventPlan, seed: Session[], interpretation: Interpretation): Session[][] {
   const ordered = [...seed].sort((a, b) => a.start - b.start)
   const target = seed.find(session => session.id === interpretation.targetId)
@@ -107,8 +132,9 @@ function scheduleVariants(plan: EventPlan, seed: Session[], interpretation: Inte
   if (group.length) groups.push({ items: group.splice(0), lower, upper: plan.end })
   let combinations: Session[][] = [copySessions(ordered.filter(session => session.locked || session.start < (plan.asOf ?? plan.start)))]
   for (const block of groups) {
-    const touched = block.items.some(session => session.id === interpretation.targetId)
-    const orders = touched ? permutations(block.items) : [block.items]
+    const originalTarget = plan.sessions.find(session => session.id === interpretation.targetId)
+    const touched = block.items.some(session => session.id === interpretation.targetId) || !!(originalTarget && target && ongoingExtension(plan, interpretation, originalTarget) && block.lower === target.start + target.duration)
+    const orders = touched ? repairOrders(block.items, interpretation.targetId, plan) : [block.items]
     const variants: Session[][] = []
     for (const order of orders) {
       for (const preserve of touched ? [true, false] : [true]) {
@@ -160,16 +186,85 @@ function makeOption(plan: EventPlan, sessions: Session[], interpretation: Interp
   const handoffs = affectedOwners.map(personId => {
     const person = plan.people.find(owner => owner.id === personId)!
     const affected = sessions.filter(session => session.ownerId === personId && changedIds.has(session.id))
-    return { personId, title: `${person.name.split(' ')[0]}’s updated plan`, message: `Hi ${person.name.split(' ')[0]}, a quick update for ${plan.name}:\n\n${affected.map(session => `• ${session.title}: ${formatTimeFull(session.start)}–${formatTimeFull(session.start + session.duration)}, ${plan.rooms.find(room => room.id === session.roomId)?.name}.\n  What changed: ${changes.filter(change => change.sessionId === session.id).map(change => `${change.before} → ${change.after}`).join('; ')}.`).join('\n\n')}\n\nPlease confirm you have the updated plan. Thank you!` }
+    const fieldLabels = { start: 'Start time', duration: 'Duration', roomId: 'Room', ownerId: 'Owner' }
+    return { personId, title: `${person.name.trim().split(' ')[0]}’s updated plan`, message: `Hi ${person.name.trim().split(' ')[0]},\n\nTiming and room details to confirm for ${plan.name}:\n${plan.date} · ${plan.timezone}\nVenue: ${plan.venue}\n\n${affected.map(session => `• ${session.title}: ${formatTimeFull(session.start)}–${formatTimeFull(session.start + session.duration)}, ${plan.rooms.find(room => room.id === session.roomId)?.name}.\n  What changed: ${changes.filter(change => change.sessionId === session.id).map(change => `${fieldLabels[change.field]}: ${change.before} → ${change.after}`).join('; ')}.`).join('\n\n')}\n\nPlease confirm this timing and room work for you. Thank you!` }
   })
   let title = interpretation.kind === 'room' ? 'Give the sessions a new home' : earlier ? `Bring ${earlier.id === 'workshop' ? 'the workshop' : earlier.id === 'conversation' ? 'the conversation' : earlier.title.toLowerCase()} forward` : 'Let the schedule breathe'
   if (title.length > 75) title = 'Reorder the flexible sessions'
   return { id: `option-${index + 1}`, title, description: interpretation.kind === 'room' ? 'Keep every time intact and move affected activities to a suitable space.' : earlier ? 'Change the running order, preserve the full sessions, and keep the fixed moments.' : 'Use the available breathing room while protecting the fixed moments.', sessions, changes, checks: validateCandidate(plan, sessions, interpretation), handoffs, score, tradeoff: `${changedIds.size} ${changedIds.size === 1 ? 'activity changes' : 'activities change'} · ${affectedOwners.length} ${affectedOwners.length === 1 ? 'person needs' : 'people need'} an update` }
 }
 
-export function repairPlan(plan: EventPlan, text: string): RepairResult {
-  const interpretation = interpretDisruption(plan, text)
-  const result: RepairResult = { id: `repair-${Date.now()}`, mode: 'demo', summary: '', interpretation, options: [], blockers: [], trace: [] }
+function explainUnfoundRepair(plan: EventPlan, seed: Session[], interpretation: Interpretation): string[] {
+  if (interpretation.kind === 'room') {
+    const room = plan.rooms.find(item => item.id === interpretation.targetId)!
+    const affected = plan.sessions.filter(session => session.roomId === room.id && session.start >= (plan.asOf ?? plan.start))
+    const blockers: string[] = []
+    for (const session of affected) {
+      if (session.locked) blockers.push(`“${session.title}” is locked in ${room.name} at ${formatTimeFull(session.start)}. Confirm a new location and revise that lock before retrying.`)
+      else {
+        const alternatives = plan.rooms.filter(item => item.id !== room.id)
+        const suitable = alternatives.some(item => item.capacity >= session.attendees && session.requiredEquipment.every(equipment => item.equipment.includes(equipment)))
+        if (!suitable) {
+          const requirements = `${session.attendees} attendees${session.requiredEquipment.length ? ` and ${session.requiredEquipment.join(', ')}` : ''}`
+          const reasons = alternatives.map(item => {
+            const missing = session.requiredEquipment.filter(equipment => !item.equipment.includes(equipment))
+            return `${item.name}: ${[item.capacity < session.attendees ? `holds ${item.capacity}` : '', missing.length ? `missing ${missing.join(', ')}` : ''].filter(Boolean).join('; ')}`
+          })
+          blockers.push(`“${session.title}” needs space for ${requirements}. ${reasons.length ? reasons.join('. ') + '.' : 'No other room is listed.'} Confirm a suitable space and add its actual capacity and equipment to the event.`)
+        }
+      }
+      if (blockers.length === 3) break
+    }
+    return blockers.length ? blockers : ['The bounded search did not find a checked room assignment. Review the remaining activities and confirm which existing spaces can be used; no changes have been made.']
+  }
+  const target = seed.find(session => session.id === interpretation.targetId)!
+  const original = plan.sessions.find(session => session.id === target.id)!
+  const owner = plan.people.find(person => person.id === target.ownerId)!
+  const ongoing = ongoingExtension(plan, interpretation, original)
+  const earliest = ongoing ? original.start : Math.max(plan.start + (target.setupMinutes ?? 0), plan.asOf ?? plan.start, owner.availableFrom ?? plan.start, interpretation.kind === 'delay' ? original.start + interpretation.minutes : plan.start)
+  const latest = Math.min(plan.end, owner.availableUntil ?? plan.end)
+  if (earliest + target.duration > latest) {
+    const boundary = (owner.availableUntil ?? plan.end) < plan.end ? `${owner.name} is available only until ${formatTimeFull(latest)}` : `the event ends at ${formatTimeFull(plan.end)}`
+    return [`“${target.title}” needs ${target.duration} minutes and can start no earlier than ${formatTimeFull(earliest)}, but ${boundary}. Confirm different availability or a smaller change before retrying.`]
+  }
+  const minimumLength = seed.reduce((sum, session) => sum + session.duration + (session.setupMinutes ?? 0), 0)
+  if (minimumLength > plan.end - plan.start) {
+    return [`Full activities and changeovers need at least ${minimumLength} minutes; the ${formatTimeFull(plan.start)}–${formatTimeFull(plan.end)} event window has ${plan.end - plan.start}. That is ${minimumLength - (plan.end - plan.start)} minutes short even with all gaps removed. A producer must revise the requested extra time or agree a different event window.`]
+  }
+  const nextFixed = plan.sessions.filter(session => session.locked && session.start > original.start).sort((a, b) => a.start - b.start)[0]
+  if (ongoing && nextFixed && target.start + target.duration + (nextFixed.setupMinutes ?? 0) > nextFixed.start) {
+    return [`Extending the running “${target.title}” by ${interpretation.minutes} minutes puts its end at ${formatTimeFull(target.start + target.duration)}, which conflicts with the fixed “${nextFixed.title}” at ${formatTimeFull(nextFixed.start)}${nextFixed.setupMinutes ? ` and its ${nextFixed.setupMinutes}-minute changeover` : ''}. A producer must agree less extra time or explicitly revise that fixed commitment; Ripple will not move a session that has already started.`]
+  }
+  return [
+    `The bounded search did not find a checked repair${nextFixed ? ` before the fixed “${nextFixed.title}” at ${formatTimeFull(nextFixed.start)}` : ' within this event'}. This does not prove a repair is impossible.`,
+    'This local search keeps flexible activities on their original side of fixed moments. A producer can review moving an activity across one of those boundaries, confirm different owner availability, or reduce the requested change. The current plan has not changed.',
+  ]
+}
+
+/** Repair the selected IDs directly. The optional note never changes the target. */
+export function repairInterpretedPlan(plan: EventPlan, interpretation: Interpretation, disruption?: string): RepairResult {
+  const result: RepairResult = { id: `repair-${Date.now()}`, mode: 'demo', summary: '', interpretation: { ...interpretation }, options: [], blockers: [], trace: [] }
+  const stop = (summary: string, blockers: string[]): RepairResult => {
+    result.summary = summary
+    result.blockers = blockers
+    result.trace = [{ id: 'check', label: 'Check the selected change', detail: 'No repair or handoff was generated. The current plan is unchanged.', status: 'complete' }]
+    return result
+  }
+  const baselineFailures = validateCandidate(plan, plan.sessions, { kind: 'unknown', targetId: null, minutes: 0, description: 'Check the starting schedule.' }).filter(check => !check.passed)
+  if (baselineFailures.length) return stop('The starting schedule needs attention.', [`Resolve these existing conflicts before repairing a new change: ${baselineFailures.map(check => check.label.toLowerCase()).join('; ')}.`])
+  if (!['delay', 'duration', 'room', 'absence', 'unknown'].includes(interpretation.kind)) return stop('Choose a supported change.', ['Select an activity delay, additional session time, or a room closure. No changes have been made.'])
+  const target = plan.sessions.find(session => session.id === interpretation.targetId)
+  if (interpretation.kind === 'room' && !plan.rooms.some(room => room.id === interpretation.targetId)) return stop('Choose an existing room.', ['That room is not in this event. Select the affected room again; no room was inferred from its name.'])
+  if (interpretation.kind === 'room' && interpretation.minutes !== 0) return stop('Choose the scope of the room closure.', ['The local planner supports a room closure from the repair-from time through the end of the event. Temporary closures need a producer’s revised plan.'])
+  if (interpretation.kind === 'delay' || interpretation.kind === 'duration') {
+    if (!target) return stop('Choose an existing activity.', ['That activity is not in this event. Select the affected activity again; similarly named activities were not substituted.'])
+    if (!Number.isInteger(interpretation.minutes) || interpretation.minutes <= 0 || interpretation.minutes > 720) return stop('Enter a whole number of minutes.', ['Use 1–720 additional minutes for the selected activity. No timing change has been applied.'])
+    if (interpretation.kind === 'duration' && target.duration + interpretation.minutes > 720) return stop('Review the total activity duration.', ['An individual activity can last at most 720 minutes in this planner. Confirm the intended duration before retrying.'])
+    if (target.locked) return stop('That activity is locked.', [`“${target.title}” is fixed at ${formatTimeFull(target.start)} for ${target.duration} minutes. Confirm that this commitment can change, then revise its lock in the source plan before retrying.`])
+    if (target.start < (plan.asOf ?? plan.start) && !ongoingExtension(plan, interpretation, target)) return interpretation.kind === 'duration'
+      ? stop('That activity has finished.', [`“${target.title}” ended at ${formatTimeFull(target.start + target.duration)}, at or before the ${formatTimeFull(plan.asOf ?? plan.start)} repair-from time. A producer must confirm what actually happened and revise the baseline; Ripple will not extend a completed activity.`])
+      : stop('That activity has already started.', [`“${target.title}” started at ${formatTimeFull(target.start)}, before the ${formatTimeFull(plan.asOf ?? plan.start)} repair-from time. A producer must confirm what actually happened; Ripple will not rewrite its start. If it is still running and needs extra time, choose a duration extension instead.`])
+  }
   const ongoingInClosedRoom = interpretation.kind === 'room' && plan.sessions.some(session => session.roomId === interpretation.targetId && session.start < (plan.asOf ?? plan.start) && session.start + session.duration > (plan.asOf ?? plan.start))
   if (ongoingInClosedRoom) {
     result.summary = 'An activity is already using that room.'
@@ -193,21 +288,25 @@ export function repairPlan(plan: EventPlan, text: string): RepairResult {
   const candidates = interpretation.kind === 'room' ? roomVariants(plan, interpretation) : scheduleVariants(plan, seed, interpretation)
   const seen = new Set<string>()
   const options = candidates.filter(sessions => {
-    const key = [...sessions].sort((a, b) => a.id.localeCompare(b.id)).map(session => `${session.id}:${session.start}:${session.duration}:${session.roomId}`).join('|')
+    const key = JSON.stringify([...sessions].sort((a, b) => a.id.localeCompare(b.id)).map(session => [session.id, session.start, session.duration, session.roomId]))
     if (seen.has(key)) return false
     seen.add(key)
     return validateCandidate(plan, sessions, interpretation).every(check => check.passed)
   }).map((sessions, index) => makeOption(plan, sessions, interpretation, index)).filter(option => option.changes.length > 0).sort((a, b) => a.score - b.score)
   result.options = options.slice(0, 2).map((option, index) => ({ ...option, id: `option-${index + 1}` }))
-  result.summary = result.options.length ? `${result.options.length === 1 ? 'One checked way' : 'Two checked ways'} to keep the day moving.` : 'No checked repair fits the current constraints.'
-  if (!result.options.length) result.blockers = interpretation.kind === 'room' ? ['No available room assignment preserves capacity, equipment, and fixed activities. Confirm another suitable space or revise a fixed activity in the source plan.'] : ['The requested change does not fit between the fixed moments while preserving durations, setup buffers, and owner availability. A fixed boundary or the scope of the change needs a human decision.']
+  result.summary = result.options.length ? `${result.options.length === 1 ? 'One checked way' : 'Two checked ways'} to keep the day moving.` : 'No checked repair was found.'
+  if (!result.options.length) result.blockers = explainUnfoundRepair(plan, seed, interpretation)
   result.trace = [
-    { id: 'interpret', label: 'Read the change', detail: 'Local rules extracted the affected activity and the new requirement.', status: 'complete' },
-    { id: 'explore', label: 'Explore repairs', detail: `Evaluated ${seen.size} distinct candidate ${seen.size === 1 ? 'plan' : 'plans'} using local scheduling rules.`, status: 'complete' },
+    { id: 'interpret', label: 'Read the change', detail: `${interpretation.description}${disruption?.trim() ? ' The accompanying note did not change the selected target.' : ''}`, status: 'complete' },
+    { id: 'explore', label: 'Explore repairs', detail: `Evaluated ${seen.size} distinct candidate ${seen.size === 1 ? 'plan' : 'plans'} using a bounded local search.`, status: 'complete' },
     { id: 'check', label: 'Check the boundaries', detail: `${options.length} candidates passed all 11 deterministic checks.`, status: 'complete' },
-    { id: 'handoff', label: 'Prepare the handoffs', detail: options.length ? 'Drafted updates for affected session owners. Nothing has been sent.' : 'No feasible repair; no handoff drafts were created.', status: 'complete' },
+    { id: 'handoff', label: 'Prepare the handoffs', detail: options.length ? 'Drafted updates for affected session owners. Nothing has been sent.' : 'No checked plan was found; no handoff drafts were created.', status: 'complete' },
   ]
   return result
+}
+
+export function repairPlan(plan: EventPlan, text: string): RepairResult {
+  return repairInterpretedPlan(plan, interpretDisruption(plan, text), text)
 }
 
 export function parseImportedPlan(value: unknown): EventPlan {
@@ -236,5 +335,5 @@ export function parseImportedPlan(value: unknown): EventPlan {
 }
 
 export function exportHandoff(plan: EventPlan, result: RepairResult, option: RepairOption, approved = false): string {
-  return `RIPPLE · ${approved ? 'UPDATED RUN OF SHOW' : 'PROPOSED RUN OF SHOW'}\n${approved ? 'APPROVED LOCALLY — this repair was applied in the organizer workspace.' : 'PROPOSAL ONLY — this repair has not been applied.'}\n${plan.name}\n${plan.date} · ${plan.venue} · ${plan.timezone}\n${result.mode === 'demo' ? 'DEMO MODE — calculated with local rules; no AI model was called.' : 'LIVE MODE — generated by the connected service and checked against plan constraints.'}\n\nTHE CHANGE\n${result.interpretation.description}\n\nTHE REPAIR\n${option.title}\n${option.description}\n\nRUN OF SHOW\n${[...option.sessions].sort((a, b) => a.start - b.start).map(session => `${formatTimeFull(session.start)}–${formatTimeFull(session.start + session.duration)} | ${session.title}\n  ${plan.rooms.find(room => room.id === session.roomId)?.name} · ${plan.people.find(person => person.id === session.ownerId)?.name}${session.locked ? ' · FIXED' : ''}`).join('\n\n')}\n\nWHAT CHANGED\n${option.changes.map(change => `${plan.sessions.find(session => session.id === change.sessionId)?.title}: ${change.before} → ${change.after}\n  ${change.reason}`).join('\n\n')}\n\nCHECKS\n${option.checks.map(check => `${check.passed ? 'PASS' : 'FAIL'} · ${check.label}: ${check.detail}`).join('\n')}\n\nHANDOFF DRAFTS — nothing has been sent\n\n${option.handoffs.map(handoff => `${handoff.title}\n${handoff.message}`).join('\n\n---\n\n')}\n`
+  return `RIPPLE · ${approved ? 'UPDATED RUN OF SHOW' : 'PROPOSED RUN OF SHOW'}\n${approved ? 'APPROVED LOCALLY — this repair was applied in the organizer workspace.' : 'PROPOSAL ONLY — this repair has not been applied.'}\n${plan.name}\n${plan.date} · ${plan.venue} · ${plan.timezone}\n${result.mode === 'demo' ? 'RULE-BASED PLAN — calculated with scheduling rules; no AI model was called.' : 'LIVE MODE — generated by the connected service and checked against plan constraints.'}\n\nTHE CHANGE\n${result.interpretation.description}\n\nTHE REPAIR\n${option.title}\n${option.description}\n\nRUN OF SHOW\n${[...option.sessions].sort((a, b) => a.start - b.start).map(session => `${formatTimeFull(session.start)}–${formatTimeFull(session.start + session.duration)} | ${session.title}\n  ${plan.rooms.find(room => room.id === session.roomId)?.name} · ${plan.people.find(person => person.id === session.ownerId)?.name}${session.locked ? ' · FIXED' : ''}`).join('\n\n')}\n\nWHAT CHANGED\n${option.changes.map(change => `${plan.sessions.find(session => session.id === change.sessionId)?.title}: ${change.before} → ${change.after}\n  ${change.reason}`).join('\n\n')}\n\nCHECKS\n${option.checks.map(check => `${check.passed ? 'PASS' : 'FAIL'} · ${check.label}: ${check.detail}`).join('\n')}\n\nHANDOFF DRAFTS — nothing has been sent\n\n${option.handoffs.map(handoff => `${handoff.title}\n${handoff.message}`).join('\n\n---\n\n')}\n`
 }

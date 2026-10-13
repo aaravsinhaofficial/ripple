@@ -5,7 +5,7 @@ test('repair, inspect, apply, export, and undo a delayed speaker', async ({ page
   await page.setViewportSize({width:1440,height:1000});
   await page.goto('/');
   await expect(page.getByRole('heading', { name: 'Keep a good day going.' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Demo mode' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Local planner' })).toBeVisible();
   await page.screenshot({path:'artifacts/ripple-workspace.png', fullPage:true, animations:'disabled'});
   await page.getByRole('button', { name: 'A speaker is running late' }).click();
   await page.getByRole('button', { name: 'Find a way forward' }).click();
@@ -27,7 +27,7 @@ test('repair, inspect, apply, export, and undo a delayed speaker', async ({ page
   const path = await download.path();
   const { readFile } = await import('node:fs/promises');
   const contents = await readFile(path!, 'utf8');
-  expect(contents).toContain('DEMO MODE');
+  expect(contents).toContain('RULE-BASED PLAN');
   expect(contents).toContain('nothing has been sent');
   await page.getByRole('button', { name: /Change log/ }).click();
   await expect(page.locator('.history-card')).toHaveCount(1);
@@ -39,6 +39,7 @@ test('repair, inspect, apply, export, and undo a delayed speaker', async ({ page
 
 test('an impossible disruption stays blocked and does not change the event', async ({ page }) => {
   await page.goto('/');
+  await page.getByRole('button', { name: 'Describe in words' }).click();
   await page.getByLabel('Describe the change to your event').fill('Maya is 8 hours late');
   await page.getByRole('button', { name: 'Find a way forward' }).click();
   await expect(page.getByRole('button', { name: 'Adjust the change' })).toBeVisible();
@@ -51,7 +52,8 @@ test('an imported event and accepted room repair survive reload', async ({ page 
   const plan = {...SAMPLE_PLAN, id:'custom-event', name:'Our neighborhood makers day'};
   await page.locator('input[type=file]').setInputFiles({ name:'our-event.json', mimeType:'application/json', buffer: Buffer.from(JSON.stringify(plan)) });
   await expect(page.locator('.page-heading')).toContainText(plan.name);
-  await page.getByRole('button', { name: 'We lost a room' }).click();
+  await page.getByLabel('Choose a change').selectOption('room');
+  await page.getByLabel('Room unavailable', { exact: true }).selectOption('studio');
   await page.getByRole('button', { name: 'Find a way forward' }).click();
   await page.getByRole('button', { name: 'Make this the plan' }).click();
   await page.reload();
@@ -84,7 +86,7 @@ test('later room closures preserve earlier activities', async ({ page }) => {
 
 test('keyboard dialog closes and returns focus', async ({ page }) => {
   await page.goto('/');
-  const opener = page.getByRole('button', {name:'Demo mode'});
+  const opener = page.getByRole('button', {name:'Local planner'});
   await opener.click();
   await expect(page.getByRole('dialog')).toBeVisible();
   await page.keyboard.press('Escape');
@@ -92,21 +94,26 @@ test('keyboard dialog closes and returns focus', async ({ page }) => {
   await expect(opener).toBeFocused();
 });
 
-test('the actual local API completes an asynchronous repair with honest demo provenance', async ({ page, request }) => {
+test('the actual local API preserves an exact guided target and honest rules provenance', async ({ page, request }) => {
   const health = await (await request.get('http://127.0.0.1:8000/health')).json();
   expect(health.mode, 'Integration test requires a demo API; no live credits should be used').toBe('demo');
   await page.goto('/');
-  await page.getByRole('button', {name:'Demo mode'}).click();
+  await page.getByRole('button', {name:'Local planner'}).click();
   await page.getByLabel('Ripple backend URL').fill('http://127.0.0.1:8000');
   await page.getByRole('button', {name:'Check', exact:true}).click();
   await page.getByRole('button', {name:'Use this service'}).click();
-  await expect(page.getByRole('button', {name:'Service demo'})).toBeVisible();
-  await page.getByRole('button', {name:'A speaker is running late'}).click();
+  await expect(page.getByRole('button', {name:'Rules service'})).toBeVisible();
+  await page.getByLabel('Choose a change', {exact:true}).selectOption('delay');
+  await page.getByLabel('Activity to change', {exact:true}).selectOption('showcase');
+  await page.getByLabel('Minutes later', {exact:true}).fill('20');
   await page.getByRole('button', {name:'Find a way forward'}).click();
   await expect(page.getByRole('button', {name:'Make this the plan'})).toBeVisible({timeout:15000});
   await expect(page.locator('.demo-disclosure')).toContainText('demo mode');
   await page.getByRole('button', {name:'Make this the plan'}).click();
   await expect(page.getByRole('heading', {name:'That’s the new plan.'})).toBeVisible();
+  const sessions = await page.evaluate(() => JSON.parse(localStorage.getItem('ripple-plan-v1')!).sessions);
+  expect(sessions.find((session: {id:string}) => session.id === 'showcase').start).toBe(900);
+  expect(sessions.find((session: {id:string}) => session.id === 'conversation').start).toBe(690);
 });
 
 test('provider errors stay visible and organizer credentials never enter browser storage', async ({ page }) => {
@@ -117,7 +124,7 @@ test('provider errors stay visible and organizer credentials never enter browser
     return route.fulfill({status:503,json:{error:{code:'provider_limit',message:'Token Factory credits exhausted. No demo result was substituted.'}}});
   });
   await page.goto('/');
-  await page.getByRole('button', {name:'Demo mode'}).click();
+  await page.getByRole('button', {name:'Local planner'}).click();
   await page.getByLabel('Ripple backend URL').fill('https://ripple-test.invalid');
   await page.getByLabel('Organizer access token').fill('test-only-organizer-token');
   await page.getByRole('button', {name:'Check', exact:true}).click();

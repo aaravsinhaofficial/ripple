@@ -1,0 +1,248 @@
+/* Everyday workflows: setup, exact changes, and portable output. */
+.event-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  margin: 20px 0 24px;
+  padding: 16px 18px;
+  border: 1px solid #e8e1ed;
+  background: #f5f1f9;
+  border-radius: 12px;
+}
+.event-actions p {
+  max-width: 350px;
+  margin: 0;
+  color: #665976;
+  font-size: 13px;
+  line-height: 1.6;
+}
+.event-actions > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+.event-actions button {
+  width: auto;
+  min-height: 42px;
+  padding: 10px 13px;
+  gap: 7px;
+  font-size: 12px;
+  white-space: nowrap;
+}
+.event-switcher {
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+}
+.event-switcher:hover {
+  border-color: #b8a2d2;
+}
+.workspace-picker {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 8px 0;
+  border: 0;
+  color: #685477;
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+}
+.breadcrumb {
+  gap: 10px;
+}
+.page-heading h1 {
+  overflow-wrap: anywhere;
+}
+.storage-warning {
+  border: 1px solid #bc8640;
+  background: #fff7e8;
+  color: #634a26;
+  padding: 14px;
+  margin-bottom: 18px;
+  border-radius: 10px;
+  font-size: 14px;
+}
+.input-mode-switch {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  background: #f2eef6;
+  border-radius: 9px;
+  margin-bottom: 18px;
+}
+.input-mode-switch button {
+  flex: 1;
+  border: 0;
+  border-radius: 6px;
+  min-height: 39px;
+  padding: 8px 6px;
+  color: #70637d;
+  background: transparent;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+.input-mode-switch button[aria-pressed="true"] {
+  color: #634789;
+  background: #fff;
+  box-shadow: 0 1px 4px #44305212;
+  font-weight: 600;
+}
+.guided-repair {
+  display: grid;
+  gap: 14px;
+}
+.guided-repair label {
+  display: grid;
+  gap: 7px;
+  color: #594b66;
+  font-size: 12px;
+  font-weight: 600;
+  min-width: 0;
+}
+.guided-repair select,
+.guided-repair input {
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 44px;
+  border: 1px solid #dcd2e8;
+  background: #fff;
+  border-radius: 8px;
+  padding: 10px;
+  color: #403748;
+  font: inherit;
+  font-size: 13px;
+}
+.guided-repair input {
+  width: 100%;
+}
+.guided-repair :is(select, input):focus {
+  outline: 2px solid #9d81bd;
+  outline-offset: 2px;
+}
+.guided-summary {
+  margin: 0;
+  padding: 12px;
+  border-radius: 8px;
+  background: #f5f1f9;
+  color: #5c4870;
+  font-size: 13px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+.guided-boundary,
+.text-mode-help {
+  color: #776780;
+  font-size: 11px;
+  line-height: 1.6;
+  margin: 0 0 12px;
+}
+.text-mode-help {
+  margin: 10px 0 14px;
+}
+.repair-button {
+  margin-top: 5px;
+}
+.interpretation-confirmation {
+  font-size: 11px !important;
+  color: #756482 !important;
+  padding-top: 8px;
+  border-top: 1px solid #e5dceb;
+}
+.blocker-box + .primary-button + .secondary-button {
+  margin-top: 10px;
+}
+.handoff-card .icon-button:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+.saved-event-list {
+  display: grid;
+  gap: 10px;
+  margin: 20px 0;
+}
+.saved-event {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px;
+  text-align: left;
+  background: #fff;
+  color: #4c3e5a;
+  border: 1px solid #e3dbe9;
+  border-radius: 10px;
+  font: inherit;
+}
+button.saved-event {
+  cursor: pointer;
+}
+.saved-event.active {
+  background: #f4eef9;
+}
+.saved-event strong {
+  display: block;
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+.saved-event span {
+  display: block;
+  margin-top: 7px;
+  font-size: 12px;
+  color: #776780;
+}
+@media (max-width: 1200px) {
+  .event-actions {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .event-actions p {
+    max-width: none;
+  }
+  .event-actions > div {
+    justify-content: flex-start;
+  }
+}
+@media (max-width: 600px) {
+  .event-actions {
+    padding: 14px;
+    gap: 12px;
+  }
+  .event-actions > div {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    width: 100%;
+  }
+  .event-actions button {
+    min-height: 44px;
+    padding: 10px 7px;
+    font-size: 12px;
+  }
+  .guided-repair select,
+  .guided-repair input {
+    font-size: 16px;
+  }
+  .input-mode-switch button {
+    min-height: 44px;
+    font-size: 13px;
+  }
+  .guided-boundary,
+  .text-mode-help {
+    font-size: 12px;
+  }
+}
+@media (max-width: 490px) {
+  .breadcrumb strong {
+    display: none;
+  }
+  .breadcrumb {
+    gap: 6px;
+  }
+}

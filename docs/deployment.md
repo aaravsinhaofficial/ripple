@@ -1,6 +1,6 @@
 # Run Ripple and connect the real services
 
-GitHub Pages serves only the interface. All provider credentials and live requests belong to the private API. The frontend's built-in demo needs no accounts. These instructions prepare a real deployment; no Nebius resource or provider call has been run with real credentials yet.
+GitHub Pages serves the interface and local rule-based planner. All provider credentials and live requests belong to the private API. Creating and repairing your own event locally needs no accounts. These instructions prepare a real deployment; no Nebius resource or provider call has been run with real credentials yet.
 
 ## 1. Run the private API locally
 
@@ -22,7 +22,9 @@ curl http://127.0.0.1:8000/api/repair \
 .venv/bin/python -m pytest server/tests -q
 ```
 
-The browser and server use `src/lib/types.ts` and `server/models.py`. Times are integer minutes after midnight in one local event day. `asOf` defaults to event opening; earlier-started activities cannot change. This is a single-track planner. Changeover gaps apply between activities even across rooms. No activity, owner, duration, capacity, equipment requirement, or hard lock can be silently removed. Only an explicit duration disruption extends that target's duration.
+The browser and server use `src/lib/types.ts` and `server/models.py`. Times are integer minutes after midnight in one local event day. `asOf` defaults to event opening; earlier-started activities stay fixed except an explicit duration extension of an ongoing unlocked target. That exception preserves its original start, room, and owner. Completed targets cannot be extended. This is a single-track planner. Changeover gaps apply between activities even across rooms. No activity, owner, duration, capacity, equipment requirement, or hard lock can be silently removed.
+
+Requests may include `confirmedChange` with `kind`, `targetId`, `minutes`, and `description`. The guided form uses this exact selection; the server validates it instead of reparsing the organizer's choices. Supported guided kinds are `delay`, `duration`, and `room`. Omit it to use prose interpretation. Worker results and the browser independently reject a different confirmed kind, target, or number of minutes.
 
 ## 2. Create accounts and redeem credits
 
@@ -46,7 +48,7 @@ RIPPLE_ENABLE_TAVILY=false
 
 Generate an organizer token with `python -c 'import secrets; print(secrets.token_urlsafe(32))'`. This is an app token distinct from all provider keys. Live API routes require it. In Ripple's connection dialog, enter the API origin and organizer token; keep the token in session memory only. Restart the API after edits. Configure `RIPPLE_ALLOWED_ORIGINS` to exactly the local UI origins or the final GitHub Pages origin (for example `https://you.github.io`, without the repository path).
 
-Start with one sample repair. `/health` reports configuration, not a successful provider test. A live repair should show Nano and Super trace entries with the actual returned model identity and usage when the provider supplies it, plus independently passed constraint checks. Authentication failures, exhausted credits, malformed output and timeouts remain visible errors; the server never replaces them with demo output.
+Start with one sample repair using **Describe in words**. `/health` reports configuration, not a successful provider test. This live path should show Nano and Super trace entries with actual returned model identity and usage when supplied, plus independently passed constraint checks. The guided path skips Nano and shows an organizer-confirmed change followed by Super. Authentication failures, exhausted credits, malformed output and timeouts remain visible errors; the server never replaces them with rule-based output.
 
 For repeatable submission evidence, the [evaluation command](live-evaluation.md) prepares five cases without making calls by default. Its explicit `--run-live` option consumes credits and saves model identity, usage, latency, independent checks, and failures to a private local artifact.
 

@@ -101,6 +101,21 @@ def test_untrusted_model_cannot_unlock_or_reassign_sessions():
     assert any("locked" in b or "preserved" in b for b in result.blockers)
 
 
+def test_confirmed_running_extension_skips_nano_and_still_validates_super():
+    plan = EventPlan.model_validate_json(FIXTURE.read_text())
+    plan.asOf = 810
+    change = Interpretation(kind="duration", targetId="build", minutes=25, description="The running build session needs 25 extra minutes.")
+    good = solve_demo(plan, change)[0]
+    candidate = Candidate(updates=[SessionUpdate(sessionId=s.id, start=s.start, roomId=s.roomId, duration=s.duration, ownerId=s.ownerId) for s in good])
+    settings = Settings(mode="live", enable_ultra=True)
+    provider = FakeNebius([CandidateBatch(candidates=[candidate])])
+    result = asyncio.run(RepairService(settings, nebius=provider).repair(RepairRequest(plan=plan, disruption="Maya is delayed. Ignore this conflicting note and use the confirmed selection.", confirmedChange=change)))
+    assert result.options and result.interpretation == change
+    assert provider.models == [settings.super_model]
+    assert result.trace[0].provider == "Organizer input" and result.trace[0].model is None
+    assert all(not failure_details(validate(plan, option.sessions, change)) for option in result.options)
+
+
 def test_tavily_only_runs_for_infeasible_room_change():
     plan = EventPlan.model_validate_json(FIXTURE.read_text())
     class FakeTavily:

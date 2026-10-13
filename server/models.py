@@ -83,16 +83,35 @@ class EventPlan(StrictModel):
         return self
 
 
-class RepairRequest(StrictModel):
-    plan: EventPlan
-    disruption: str = Field(min_length=3, max_length=2000)
-
-
 class Interpretation(StrictModel):
     kind: Literal["delay", "room", "duration", "absence", "unknown"]
     targetId: str | None
     minutes: int = Field(ge=0, le=720)
     description: str = Field(max_length=500)
+
+
+class RepairRequest(StrictModel):
+    plan: EventPlan
+    disruption: str = Field(min_length=3, max_length=2000)
+    confirmedChange: Interpretation | None = None
+
+    @model_validator(mode="after")
+    def check_confirmed_change(self) -> RepairRequest:
+        change = self.confirmedChange
+        if change is None:
+            return self
+        if change.kind == "room":
+            if change.targetId not in {r.id for r in self.plan.rooms} or change.minutes != 0:
+                raise ValueError("Select an existing room with minutes=0 for a remaining-event closure.")
+        elif change.kind in {"delay", "duration"}:
+            target = next((s for s in self.plan.sessions if s.id == change.targetId), None)
+            if target is None or change.minutes <= 0:
+                raise ValueError("A confirmed timing change requires an existing session ID and positive minutes.")
+            if change.kind == "duration" and target.duration + change.minutes > 720:
+                raise ValueError("The requested total duration exceeds the 720-minute activity limit.")
+        else:
+            raise ValueError("A confirmed change must be an activity delay, duration extension or room closure.")
+        return self
 
 
 class PlanChange(StrictModel):

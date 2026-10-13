@@ -19,10 +19,17 @@ def affected_ids(plan: EventPlan, disruption: Interpretation) -> set[str]:
     return {s.id for s in plan.sessions if s.id == disruption.targetId or (disruption.kind == "absence" and s.ownerId == disruption.targetId)}
 
 
+def ongoing_extension(plan: EventPlan, disruption: Interpretation | None, session: Session) -> bool:
+    as_of = plan.asOf if plan.asOf is not None else plan.start
+    return bool(disruption and disruption.kind == "duration" and disruption.targetId == session.id and not session.locked and session.start < as_of < session.end)
+
+
 def disruption_errors(plan: EventPlan, disruption: Interpretation) -> list[str]:
     if disruption.kind == "unknown" or disruption.targetId is None:
         return ["Name one affected person, room, or session and describe the change."]
     if disruption.kind == "room":
+        if disruption.minutes != 0:
+            return ["A room closure uses zero minutes and applies through the remaining event."]
         return [] if disruption.targetId in {r.id for r in plan.rooms} else ["The affected room is not in this event."]
     affected = affected_ids(plan, disruption)
     if not affected:
@@ -31,8 +38,14 @@ def disruption_errors(plan: EventPlan, disruption: Interpretation) -> list[str]:
         return ["Specify a positive number of minutes for this timing change."]
     if disruption.kind in {"duration", "delay"} and disruption.targetId not in {s.id for s in plan.sessions}:
         return ["A timing change must identify one session."]
-    if disruption.kind in {"duration", "delay"} and any(s.id in affected and s.start < (plan.asOf if plan.asOf is not None else plan.start) for s in plan.sessions):
-        return ["The affected activity has already started. Ripple preserves the past; select an upcoming session."]
+    if disruption.kind in {"duration", "delay"}:
+        target = next(s for s in plan.sessions if s.id == disruption.targetId)
+        if target.locked:
+            return [f"{target.title} is locked. A producer must revise that commitment before it can change."]
+        if disruption.kind == "duration" and target.duration + disruption.minutes > 720:
+            return ["The requested total duration exceeds the 720-minute activity limit."]
+        if target.start < (plan.asOf if plan.asOf is not None else plan.start) and not ongoing_extension(plan, disruption, target):
+            return ["The affected activity has already started. Its start cannot change; a completed activity cannot be extended. Select an upcoming activity or extend an unlocked activity still in progress."]
     return []
 
 
@@ -61,8 +74,9 @@ def validate(plan: EventPlan, sessions: list[Session], disruption: Interpretatio
             continue
         if old.locked and old.model_dump() != s.model_dump():
             errors["locked"].append(f"{old.title} is locked.")
-        if old.start < as_of and old.model_dump() != s.model_dump():
-            errors["elapsed"].append(f"{old.title} has already started and must remain unchanged.")
+        permitted = {"duration"} if ongoing_extension(plan, disruption, old) else set()
+        if old.start < as_of and old.model_dump(exclude=permitted) != s.model_dump(exclude=permitted):
+            errors["elapsed"].append(f"{old.title} has already started. Only an explicit extension of the ongoing unlocked target may change its duration; its start, room and owner stay fixed.")
         elif old.start >= as_of and s.start < as_of:
             errors["elapsed"].append(f"{old.title} cannot move before the repair-from time.")
         immutable = ("id", "title", "attendees", "kind", "locked", "notes", "requiredEquipment", "setupMinutes")
@@ -125,7 +139,7 @@ def validate(plan: EventPlan, sessions: list[Session], disruption: Interpretatio
         "people-overlap": "No people double-booked", "room-capacity": "Every room has enough space",
         "equipment": "Required equipment available", "setup": "Changeover time preserved",
         "availability": "People's availability respected", "disruption": "Disruption resolved",
-        "elapsed": "Earlier activities stay fixed",
+        "elapsed": "Started activities keep their commitments",
     }
     return [ConstraintCheck(id=k, label=labels[k], passed=not v, detail=" ".join(v[:4]) if v else "Verified against the event constraints.") for k, v in errors.items()]
 
@@ -148,19 +162,22 @@ def make_option(plan: EventPlan, sessions: list[Session], disruption: Interpreta
             if before != after:
                 if field == "start":
                     total_shift += abs(before - after)
-                render = clock if field == "start" else (lambda v: rooms.get(v, str(v))) if field == "roomId" else str
-                changes.append(PlanChange(sessionId=s.id, field=field, before=render(before), after=render(after), reason="Resolve the disruption while preserving the event's hard constraints."))
+                render = clock if field == "start" else (lambda v: rooms.get(v, str(v))) if field == "roomId" else (lambda v: f"{v} min") if field == "duration" else str
+                reason = "Extend the selected activity by the requested additional time." if field == "duration" else "Resolve the disruption while preserving the event's hard constraints."
+                changes.append(PlanChange(sessionId=s.id, field=field, before=render(before), after=render(after), reason=reason))
     changed_ids = {c.sessionId for c in changes}
     changed = [s for s in sessions if s.id in changed_ids]
     room_moves = sum(c.field == "roomId" for c in changes)
     handoffs = []
+    field_labels = {"start": "Start time", "duration": "Duration", "roomId": "Room", "ownerId": "Owner"}
     for owner in dict.fromkeys(s.ownerId for s in changed):
         owned = [s for s in changed if s.ownerId == owner]
         lines = []
         for s in owned:
-            details = "; ".join(f"{c.field}: {c.before} → {c.after}" for c in changes if c.sessionId == s.id)
+            details = "; ".join(f"{field_labels[c.field]}: {c.before} → {c.after}" for c in changes if c.sessionId == s.id)
             lines.append(f"{s.title}: {clock(s.start)}–{clock(s.end)} in {rooms[s.roomId]} ({details}). Allow {s.setupMinutes} minutes for changeover.")
-        handoffs.append(Handoff(personId=owner, title=f"Run-of-show update · {len(owned)} activit{'y' if len(owned) == 1 else 'ies'}", message="\n".join(lines) + "\nDraft for the producer to approve."))
+        context = f"Timing and room details to confirm for {plan.name}:\n{plan.date} · {plan.timezone}\nVenue: {plan.venue}\n\n"
+        handoffs.append(Handoff(personId=owner, title=f"Run-of-show update · {len(owned)} activit{'y' if len(owned) == 1 else 'ies'}", message=context + "\n".join(lines) + "\nPlease confirm these details. Nothing has been sent."))
     score = len(changed_ids) * 100 + total_shift + room_moves * 45
     return RepairOption(
         id=f"option-{index}", title="Smallest ripple" if index == 1 else f"Another way · {index}",

@@ -27,6 +27,22 @@ The follow-up evaluation harness added nine mock-only tests. The complete Python
 
 ## Reproduce
 
+### Usability iteration — v0.2.0
+
+The complete current checks pass: **74 frontend tests, 85 Python tests, 23 cross-runtime cases, and 13 browser workflows**, plus a production build. All provider tests use mocks or the actual local demo API; no provider credits were consumed.
+
+New browser coverage creates a custom event entirely through the editor, chooses the second of two activities owned by the same person, repairs only the intended activity, and downloads context-complete handoffs, a current schedule, and a correctly timed calendar file. It then reloads, checks preserved repair history, switches events on a phone-sized viewport, and returns to the approved plan. Other cases reject invalid edits without changing the baseline, preserve a fixed lunch when an ongoing extension is too large, accept an extension that fits, and keep the open plan downloadable when browser storage fails.
+
+The guided API accepts exact organizer selections through `confirmedChange`, skips Nano honestly, and rejects altered worker interpretations. Freeform live input continues to use Nano. The local planner now supports real user-created events; `demo` remains the wire enum for the rule-based engine.
+
+The new editor and repair workflow can also be checked against the published static app, without starting a local server or submitting provider jobs:
+
+```sh
+RIPPLE_TEST_BASE_URL=https://aaravsinhaofficial.github.io/ripple/ npx playwright test tests/e2e/usability.spec.ts
+```
+
+### Local commands
+
 ```sh
 npm ci
 python3.12 -m venv .venv
@@ -45,7 +61,7 @@ The browser tests start an isolated local demo API and Vite server when they are
 
 - Frontend parsing and planning: all three sample disruptions, impossible changes, ambiguous/combined input, room and equipment requirements, full durations, preserved owners and notes, fixed moments, elapsed activities, ongoing room closures, and import validation.
 - Backend: strict schemas, provider response envelopes, actual returned model identity, invalid candidate rejection, conditional escalation, optional Tavily lookup, authentication, queue lifecycle, worker leases, independent worker-result validation, and request limits.
-- Cross-runtime contract: 15 feasible and adversarial schedule cases must produce the same verdict in the TypeScript and Python validators.
+- Cross-runtime contract: 23 feasible and adversarial schedule cases must produce the same verdict in the TypeScript and Python validators.
 - Browser: choose and inspect a repair; apply, export, and undo it; import and persist a custom plan; refuse impossible input; respect repair-from time; fit a 390 px viewport; restore dialog focus; complete an actual HTTP background job using the local demo API; and expose provider failure without leaking the organizer token into storage.
 
 The public demo's examples are fictional. Local search is bounded and returns the lowest-disruption plans it evaluated; no global optimality claim is made. Passing these checks does not validate facts omitted from an event plan.

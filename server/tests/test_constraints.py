@@ -102,6 +102,65 @@ def test_future_sessions_cannot_move_into_the_past(plan):
     assert not next(c for c in validate(plan, sessions) if c.id == "elapsed").passed
 
 
+@pytest.mark.parametrize("target,as_of,minutes", [("keynote", 580, 10), ("build", 810, 25)])
+def test_extend_ongoing_unlocked_target_in_place(plan, target, as_of, minutes):
+    plan.asOf = as_of
+    change = Interpretation(kind="duration", targetId=target, minutes=minutes, description="The selected running activity needs extra time.")
+    result = asyncio.run(RepairService(Settings()).repair(RepairRequest(plan=plan, disruption="An ambiguous note about a different activity.", confirmedChange=change)))
+    assert result.options
+    old = {s.id: s for s in plan.sessions}
+    for option in result.options:
+        assert not failure_details(validate(plan, option.sessions, change))
+        for session in option.sessions:
+            if session.id == target:
+                assert session.model_dump() == old[target].model_copy(update={"duration": old[target].duration + minutes}).model_dump()
+            elif old[session.id].start < as_of:
+                assert session == old[session.id]
+        assert all(plan.name in h.message and plan.date in h.message and plan.timezone in h.message and plan.venue in h.message for h in option.handoffs)
+    assert result.trace[0].provider == "Organizer input"
+
+
+@pytest.mark.parametrize("field,value", [("start", 795), ("roomId", "hall"), ("ownerId", "maya"), ("notes", "Changed history")])
+def test_ongoing_extension_cannot_change_its_other_fields(plan, field, value):
+    plan.asOf = 810
+    change = Interpretation(kind="duration", targetId="build", minutes=25, description="Extend build.")
+    sessions = solve_demo(plan, change)[0]
+    sessions = [s.model_copy(update={field: value}) if s.id == "build" else s for s in sessions]
+    assert not next(c for c in validate(plan, sessions, change) if c.id == "elapsed").passed
+
+
+@pytest.mark.parametrize("kind,as_of,locked", [("duration", 860, False), ("delay", 810, False), ("duration", 810, True)])
+def test_completed_extensions_started_delays_and_locks_still_block(plan, kind, as_of, locked):
+    plan.asOf = as_of
+    next(s for s in plan.sessions if s.id == "build").locked = locked
+    change = Interpretation(kind=kind, targetId="build", minutes=25, description="Change build.")
+    assert not solve_demo(plan, change)
+    result = asyncio.run(RepairService(Settings()).repair(RepairRequest(plan=plan, disruption="Change build by 25 minutes", confirmedChange=change)))
+    assert not result.options and result.blockers
+
+
+def test_ongoing_extension_cannot_overlap_locked_lunch(plan):
+    plan.asOf = 700
+    change = Interpretation(kind="duration", targetId="conversation", minutes=30, description="Extend the running conversation.")
+    assert not solve_demo(plan, change)
+
+
+def test_confirmed_change_targets_second_activity_of_same_owner(plan):
+    change = Interpretation(kind="delay", targetId="showcase", minutes=20, description="The selected showcase is delayed.")
+    result = asyncio.run(RepairService(Settings()).repair(RepairRequest(plan=plan, disruption="Imani is delayed, but this note must not select her first activity.", confirmedChange=change)))
+    assert result.options and result.interpretation == change
+    for option in result.options:
+        sessions = {s.id: s for s in option.sessions}
+        assert sessions["showcase"].start >= 900
+        assert sessions["conversation"].start == 690
+
+
+@pytest.mark.parametrize("kind,target,minutes", [("delay", "maya", 20), ("duration", "missing", 20), ("room", "missing", 0), ("room", "studio", 20), ("delay", "keynote", 0), ("absence", "maya", 0), ("unknown", None, 0)])
+def test_invalid_confirmed_change_rejected(plan, kind, target, minutes):
+    with pytest.raises(ValidationError):
+        RepairRequest(plan=plan, disruption="An organizer-selected change", confirmedChange=Interpretation(kind=kind, targetId=target, minutes=minutes, description="Selected change"))
+
+
 def test_past_room_usage_does_not_invalidate_closure(plan):
     plan.asOf = 880
     result = asyncio.run(RepairService(Settings()).repair(RepairRequest(plan=plan, disruption="Workshop Studio is unavailable for the rest of the day.")))

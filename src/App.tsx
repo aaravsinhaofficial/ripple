@@ -38,6 +38,7 @@ import {
   formatTimeFull,
   parseImportedPlan,
   repairPlan,
+  repairInterpretedPlan,
   validateCandidate,
 } from "./lib/planner";
 import type {
@@ -48,6 +49,11 @@ import type {
   Session,
 } from "./lib/types";
 import "./styles.css";
+import "./usability.css";
+import EventEditor from "./components/EventEditor";
+import GuidedRepair from "./components/GuidedRepair";
+import type { GuidedChange } from "./components/GuidedRepair";
+import { exportCalendar, exportCurrentSchedule } from "./lib/calendar";
 
 type View = "schedule" | "people" | "history";
 interface ChangeRecord {
@@ -72,6 +78,50 @@ function initialPlan(): EventPlan {
       : clonePlan(SAMPLE_PLAN);
   } catch {
     return clonePlan(SAMPLE_PLAN);
+  }
+}
+
+function storedHistory(plan: EventPlan): ChangeRecord[] {
+  try {
+    const raw = JSON.parse(
+      localStorage.getItem(`ripple-history-${plan.id}`) ?? "[]",
+    );
+    if (!Array.isArray(raw)) return [];
+    return raw.slice(0, 12).flatMap((record: ChangeRecord) => {
+      try {
+        const before = parseImportedPlan(record.before);
+        const result = checkedServiceResult(record.result, before);
+        const option = result.options.find(
+          (item) => item.id === record.option.id,
+        );
+        return before.id === plan.id &&
+          option &&
+          typeof record.id === "string" &&
+          !Number.isNaN(Date.parse(record.at))
+          ? [{ ...record, before, result, option }]
+          : [];
+      } catch {
+        return [];
+      }
+    });
+  } catch {
+    return [];
+  }
+}
+
+function storedEvents(): EventPlan[] {
+  try {
+    const raw = JSON.parse(localStorage.getItem("ripple-events-v1") ?? "[]");
+    if (!Array.isArray(raw)) return [];
+    return raw.slice(0, 6).flatMap((item) => {
+      try {
+        return [parseImportedPlan(item)];
+      } catch {
+        return [];
+      }
+    });
+  } catch {
+    return [];
   }
 }
 
@@ -364,19 +414,30 @@ function App() {
   const [selectedId, setSelectedId] = useState("");
   const [busy, setBusy] = useState(false);
   const [applied, setApplied] = useState(false);
-  const [history, setHistory] = useState<ChangeRecord[]>([]);
+  const [history, setHistory] = useState<ChangeRecord[]>(() =>
+    storedHistory(plan),
+  );
+  const [events, setEvents] = useState<EventPlan[]>(storedEvents);
+  const [storageFailed, setStorageFailed] = useState(false);
+  const [editor, setEditor] = useState<"create" | "edit" | null>(null);
+  const [inputMode, setInputMode] = useState<"guided" | "text">("guided");
+  const [guidedChange, setGuidedChange] = useState<GuidedChange | null>(null);
   const [roomFilter, setRoomFilter] = useState("all");
   const [menuOpen, setMenuOpen] = useState(false);
   const [modal, setModal] = useState<
-    "settings" | "checks" | "about" | "reset" | null
+    "settings" | "checks" | "about" | "reset" | "events" | null
   >(null);
   const [expandedSession, setExpandedSession] = useState<string | null>(null);
   const [showTrace, setShowTrace] = useState(false);
   const [toast, setToast] = useState("");
   const [error, setError] = useState("");
-  const [serviceUrl, setServiceUrl] = useState(
-    () => localStorage.getItem("ripple-service-url") ?? "",
-  );
+  const [serviceUrl, setServiceUrl] = useState(() => {
+    try {
+      return localStorage.getItem("ripple-service-url") ?? "";
+    } catch {
+      return "";
+    }
+  });
   const [accessToken, setAccessToken] = useState("");
   const [jobStatus, setJobStatus] = useState<"queued" | "running" | null>(null);
   const [useService, setUseService] = useState(false);
@@ -387,6 +448,7 @@ function App() {
   const importRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const requestRef = useRef<AbortController | null>(null);
+  const isSample = plan.id === SAMPLE_PLAN.id;
   const selected =
     result?.options.find((option) => option.id === selectedId) ??
     result?.options[0];
@@ -427,8 +489,18 @@ function App() {
       }).format(eventDate);
 
   useEffect(() => {
-    localStorage.setItem("ripple-plan-v1", JSON.stringify(plan));
-  }, [plan]);
+    try {
+      localStorage.setItem("ripple-plan-v1", JSON.stringify(plan));
+      localStorage.setItem(
+        `ripple-history-${plan.id}`,
+        JSON.stringify(history.slice(0, 12)),
+      );
+      localStorage.setItem("ripple-events-v1", JSON.stringify(events));
+      setStorageFailed(false);
+    } catch {
+      setStorageFailed(true);
+    }
+  }, [plan, history, events]);
   useEffect(() => {
     if (!toast) return;
     const timer = setTimeout(() => setToast(""), 5000);
@@ -454,10 +526,14 @@ function App() {
   };
 
   const runRepair = async () => {
-    if (!disruption.trim() || busy) {
+    const exact = inputMode === "guided" ? guidedChange : null;
+    const input =
+      inputMode === "guided" ? (exact?.text ?? "") : disruption.trim();
+    if (!input || busy) {
       textareaRef.current?.focus();
       return;
     }
+    setDisruption(input);
     setBusy(true);
     setError("");
     setResult(null);
@@ -473,7 +549,10 @@ function App() {
       if (useService) {
         const payload = JSON.stringify({
           plan: before,
-          disruption: disruption.trim(),
+          disruption: exact
+            ? `${input} The selected ${exact.interpretation.kind === "room" ? "room" : "activity"} ID is ${exact.interpretation.targetId}.`
+            : input,
+          ...(exact ? { confirmedChange: exact.interpretation } : {}),
         });
         if (new TextEncoder().encode(payload).length > 65536)
           throw new Error(
@@ -519,6 +598,16 @@ function App() {
             };
             if (job?.status === "completed") {
               next = checkedServiceResult(job.result, before);
+              if (
+                exact &&
+                (next.interpretation.kind !== exact.interpretation.kind ||
+                  next.interpretation.targetId !==
+                    exact.interpretation.targetId ||
+                  next.interpretation.minutes !== exact.interpretation.minutes)
+              )
+                throw new Error(
+                  "The service interpreted a different change from the one you selected. No repair was applied. Try again or use the local planner.",
+                );
               break;
             }
             if (job?.status === "failed")
@@ -560,7 +649,9 @@ function App() {
         await new Promise<void>((resolve) =>
           requestAnimationFrame(() => setTimeout(resolve, 180)),
         );
-        next = repairPlan(before, disruption.trim());
+        next = exact
+          ? repairInterpretedPlan(before, exact.interpretation, input)
+          : repairPlan(before, input);
       }
       setResult(next);
       setSelectedId(next.options[0]?.id ?? "");
@@ -606,7 +697,7 @@ function App() {
         result,
         option: selected,
       },
-      ...previous,
+      ...previous.slice(0, 11),
     ]);
     setPlan({
       ...clonePlan(plan),
@@ -619,6 +710,7 @@ function App() {
   };
 
   const undoLast = () => {
+    if (busy) return;
     const latest = history[0];
     if (!latest) return;
     setPlan(clonePlan(latest.before));
@@ -634,10 +726,15 @@ function App() {
       `ripple-${plan.id}-${applied ? "handoff" : "proposal"}.txt`,
       exportHandoff(resultBase ?? plan, result, selected, applied),
     );
-    setToast("The updated run of show and handoff drafts were downloaded.");
+    setToast(
+      applied
+        ? "The approved schedule and handoff drafts were downloaded."
+        : "The proposal was downloaded. It has not been applied.",
+    );
   };
 
   const copyHandoff = async (handoff: Handoff) => {
+    if (!applied) return;
     try {
       await navigator.clipboard.writeText(handoff.message);
       setCopied(handoff.personId);
@@ -656,12 +753,7 @@ function App() {
       if (file.size > 300000)
         throw new Error("Please choose a JSON event plan smaller than 300 KB.");
       const imported = parseImportedPlan(JSON.parse(await file.text()));
-      setPlan(imported);
-      setHistory([]);
-      clearRepair();
-      setDisruption("");
-      setRoomFilter("all");
-      setView("schedule");
+      saveEvent(imported);
       setToast(
         `“${imported.name}” is ready. ${imported.sessions.length} activities passed the baseline checks.`,
       );
@@ -693,7 +785,11 @@ function App() {
         );
       setHealth(value);
       setServiceUrl(url);
-      localStorage.setItem("ripple-service-url", url);
+      try {
+        localStorage.setItem("ripple-service-url", url);
+      } catch {
+        /* Connection works in memory. */
+      }
     } catch (failure) {
       setServiceError(
         failure instanceof Error
@@ -720,9 +816,52 @@ function App() {
   };
 
   const chooseExample = (text: string) => {
+    setInputMode("text");
     setDisruption(text);
     clearRepair();
-    textareaRef.current?.focus();
+    setTimeout(() => textareaRef.current?.focus(), 0);
+  };
+
+  const saveEvent = (next: EventPlan) => {
+    const checked = parseImportedPlan(next);
+    if (editor === "edit" && checked.id === SAMPLE_PLAN.id)
+      checked.id = `event-${crypto.randomUUID()}`;
+    if (checked.id !== plan.id)
+      setEvents((previous) =>
+        [
+          clonePlan(plan),
+          ...previous.filter(
+            (item) => item.id !== plan.id && item.id !== checked.id,
+          ),
+        ].slice(0, 6),
+      );
+    setPlan(checked);
+    setHistory(checked.id === plan.id ? [] : storedHistory(checked));
+    clearRepair();
+    setDisruption("");
+    setRoomFilter("all");
+    setView("schedule");
+    setInputMode("guided");
+    setEditor(null);
+    setModal(null);
+    setToast(
+      `${checked.name} is ready. Your changes have been applied.`,
+    );
+  };
+
+  const downloadCalendar = () => {
+    try {
+      download(`ripple-${plan.id}.ics`, exportCalendar(plan), "text/calendar");
+      setToast(
+        "Calendar file downloaded. Import it into your calendar; no invitations were sent.",
+      );
+    } catch (failure) {
+      setToast(
+        failure instanceof Error
+          ? failure.message
+          : "Calendar export failed. Download the text schedule instead.",
+      );
+    }
   };
 
   return (
@@ -752,18 +891,31 @@ function App() {
         <div className="workspace-label">
           YOUR WORKSPACE<span>01</span>
         </div>
-        <div className="event-switcher">
+        <button
+          className="event-switcher"
+          onClick={() => setModal("events")}
+          aria-label="Your events"
+          disabled={busy}
+        >
           <div className="event-mark">
-            f<span>n</span>
+            {isSample ? (
+              <>
+                f<span>n</span>
+              </>
+            ) : (
+              plan.name.slice(0, 2)
+            )}
           </div>
           <div>
             <strong>
               {plan.name === SAMPLE_PLAN.name ? "Fieldnotes" : plan.name}
             </strong>
-            <span>{shortDate} · Community day</span>
+            <span>
+              {shortDate} · {isSample ? "Sample event" : "Your event"}
+            </span>
           </div>
           <ChevronDown size={15} className="muted" />
-        </div>
+        </button>
         <nav className="side-nav" aria-label="Workspace navigation">
           <button
             className={view === "schedule" ? "nav-item active" : "nav-item"}
@@ -816,7 +968,9 @@ function App() {
           </button>
           <div className="local-note">
             <span className="status-dot" />
-            {useService ? "Connected service" : "Saved in this browser"}
+            {storageFailed
+              ? "Download to keep your plan"
+              : "Saved in this browser"}
           </div>
           <div className="built-with">Made for the unexpected.</div>
         </div>
@@ -825,7 +979,14 @@ function App() {
       <div className="workspace">
         <header className="topbar">
           <div className="breadcrumb">
-            Workspace <span>/</span>{" "}
+            <button
+              className="workspace-picker"
+              disabled={busy}
+              onClick={() => setModal("events")}
+            >
+              Your events <ChevronDown size={12} />
+            </button>{" "}
+            <span>/</span>{" "}
             <strong>
               {view === "schedule"
                 ? "The live plan"
@@ -844,8 +1005,8 @@ function App() {
               {useService
                 ? health?.mode === "live"
                   ? "Live service"
-                  : "Service demo"
-                : "Demo mode"}
+                  : "Rules service"
+                : "Local planner"}
               <ChevronDown size={12} />
             </button>
             <span className="topbar-divider" />
@@ -858,11 +1019,13 @@ function App() {
           <section className="page-heading">
             <div>
               <div className="eyebrow">
-                A LITTLE PLANNING. A LOT OF POSSIBILITY.
+                SCHEDULE REPAIR FOR EVENT ORGANIZERS
               </div>
               <h1>
                 {view === "schedule"
-                  ? "Keep a good day going."
+                  ? isSample
+                    ? "Keep a good day going."
+                    : plan.name
                   : view === "people"
                     ? "Good things take good people."
                     : "Every change has a story."}
@@ -879,6 +1042,52 @@ function App() {
               <span className="stamp-bottom">KEEP GOING.</span>
             </div>
           </section>
+
+          <div className="event-actions">
+            <p>
+              {isSample
+                ? "You’re exploring a sample. Try a change, or bring your own event."
+                : storageFailed ? "Your event is open. Download it to keep a copy." : "Your event, saved on this device. One activity at a time."}
+            </p>
+            <div>
+              <button
+                className={isSample ? "primary-button" : "secondary-button"}
+                disabled={busy}
+                onClick={() => setEditor("create")}
+              >
+                <Plus size={15} />
+                Create event
+              </button>
+              <button
+                className="secondary-button"
+                disabled={busy}
+                onClick={() => setEditor("edit")}
+              >
+                Edit event
+              </button>
+              <button
+                className="secondary-button"
+                onClick={() =>
+                  download(
+                    `ripple-${plan.id}-schedule.txt`,
+                    exportCurrentSchedule(plan),
+                  )
+                }
+              >
+                <ArrowDownToLine size={15} />
+                Download schedule
+              </button>
+              <button className="secondary-button" onClick={downloadCalendar}>
+                Add to calendar
+              </button>
+            </div>
+          </div>
+          {storageFailed && (
+            <div className="storage-warning" role="alert">
+              Your browser could not save these changes. The plan is still open
+              here. Download the schedule or event JSON before closing this tab.
+            </div>
+          )}
 
           <div className="event-facts">
             <span>
@@ -1111,19 +1320,21 @@ function App() {
                                 <span
                                   className={`session-kind ${session.kind === "break" ? "break-kind" : ""}`}
                                 >
-                                  {session.id === "keynote"
+                                  {isSample && session.id === "keynote"
                                     ? "KEYNOTE"
-                                    : session.id === "workshop"
+                                    : isSample && session.id === "workshop"
                                       ? "WORKSHOP"
-                                      : session.id === "build"
+                                      : isSample && session.id === "build"
                                         ? "BUILD SESSION"
-                                        : session.id === "showcase"
+                                        : isSample && session.id === "showcase"
                                           ? "COMMUNITY DEMOS"
                                           : session.kind === "break"
-                                            ? "TAKE A BREATHER"
+                                            ? "BREAK"
                                             : session.kind === "fixed"
-                                              ? "THE LITTLE MOMENTS"
-                                              : "CONVERSATION"}
+                                              ? "FIXED COMMITMENT"
+                                              : isSample
+                                                ? "CONVERSATION"
+                                                : "ACTIVITY"}
                                 </span>
                                 {changed && (
                                   <span className="change-tag">
@@ -1328,6 +1539,7 @@ function App() {
                       ))}
                       <button
                         className="secondary-button undo-history"
+                        disabled={busy}
                         onClick={undoLast}
                       >
                         <RotateCcw size={15} />
@@ -1342,7 +1554,8 @@ function App() {
                       <h3>A fresh page.</h3>
                       <p>
                         When you apply a repair, its changes and handoff drafts
-                        will appear here for this session.
+                        will appear here. Your latest 12 repairs stay on this
+                        device.
                       </p>
                       <button
                         className="text-button"
@@ -1370,7 +1583,10 @@ function App() {
                     </span>
                   </div>
                   <p className="handoff-subtitle">
-                    Ready to share when you are. Nothing is sent automatically.
+                    {applied
+                      ? "Approved update. Copy a draft to share it with the person affected."
+                      : "Proposal drafts. Apply this repair before sharing these updates."}{" "}
+                    Nothing is sent automatically.
                   </p>
                   <div className="handoff-list">
                     {selected.handoffs.map((handoff) => (
@@ -1391,6 +1607,7 @@ function App() {
                           </div>
                           <button
                             className="icon-button"
+                            disabled={!applied}
                             onClick={() => void copyHandoff(handoff)}
                             aria-label={`Copy ${handoff.title}`}
                           >
@@ -1424,8 +1641,8 @@ function App() {
                       <em>You’ve got this.</em>
                     </h2>
                     <p className="repair-intro">
-                      Tell us what’s different. We’ll find a way to keep the
-                      good parts of your day.
+                      Choose what changed. Compare checked repairs, then decide
+                      what to apply.
                     </p>
                   </>
                 )}
@@ -1454,7 +1671,7 @@ function App() {
                         ? "That’s the new plan."
                         : selected
                           ? "A ripple. Not a reset."
-                          : "Let’s make a little room."}
+                          : "This needs a decision."}
                     </h2>
                     <p>
                       {applied
@@ -1467,37 +1684,82 @@ function App() {
                 {!result && (
                   <>
                     <div
-                      className={`disruption-input ${busy ? "input-busy" : ""}`}
+                      className="input-mode-switch"
+                      aria-label="How to describe the change"
                     >
-                      <label htmlFor="disruption" className="sr-only">
-                        Describe the change to your event
-                      </label>
-                      <textarea
-                        ref={textareaRef}
-                        id="disruption"
-                        placeholder="e.g. Maya’s train is delayed. She’ll be 40 minutes late for her keynote…"
-                        value={disruption}
-                        onChange={(event) => setDisruption(event.target.value)}
+                      <button
+                        aria-pressed={inputMode === "guided"}
                         disabled={busy}
-                        maxLength={1800}
-                        onKeyDown={(event) => {
-                          if (
-                            (event.metaKey || event.ctrlKey) &&
-                            event.key === "Enter"
-                          ) {
-                            event.preventDefault();
-                            void runRepair();
-                          }
-                        }}
-                      />
-                      <div className="input-foot">
-                        <span>What changed?</span>
-                        <span>⌘ ↵</span>
-                      </div>
+                        onClick={() => setInputMode("guided")}
+                      >
+                        Choose a change
+                      </button>
+                      <button
+                        aria-pressed={inputMode === "text"}
+                        disabled={busy}
+                        onClick={() => setInputMode("text")}
+                      >
+                        Describe in words
+                      </button>
                     </div>
+                    {inputMode === "guided" ? (
+                      <GuidedRepair
+                        plan={plan}
+                        busy={busy}
+                        onChange={setGuidedChange}
+                      />
+                    ) : (
+                      <>
+                        <div
+                          className={`disruption-input ${busy ? "input-busy" : ""}`}
+                        >
+                          <label htmlFor="disruption" className="sr-only">
+                            Describe the change to your event
+                          </label>
+                          <textarea
+                            ref={textareaRef}
+                            id="disruption"
+                            placeholder={
+                              isSample
+                                ? "e.g. Maya is 40 minutes late for her keynote."
+                                : "Name one activity or room and say what changed. For exact choices, use Choose a change."
+                            }
+                            value={disruption}
+                            onChange={(event) =>
+                              setDisruption(event.target.value)
+                            }
+                            disabled={busy}
+                            maxLength={1800}
+                            onKeyDown={(event) => {
+                              if (
+                                (event.metaKey || event.ctrlKey) &&
+                                event.key === "Enter"
+                              ) {
+                                event.preventDefault();
+                                void runRepair();
+                              }
+                            }}
+                          />
+                          <div className="input-foot">
+                            <span>What changed?</span>
+                            <span>⌘ ↵</span>
+                          </div>
+                        </div>
+                        <p className="text-mode-help">
+                          {useService && health?.mode === "live"
+                            ? "The connected model will interpret your change."
+                            : "Handles one named delay, room closure, or duration change. Use the guided form if names are ambiguous."}
+                        </p>
+                      </>
+                    )}
                     <button
                       className="primary-button repair-button"
-                      disabled={busy || !disruption.trim()}
+                      disabled={
+                        busy ||
+                        (inputMode === "guided"
+                          ? !guidedChange
+                          : !disruption.trim())
+                      }
                       onClick={() => void runRepair()}
                     >
                       {busy ? (
@@ -1533,29 +1795,33 @@ function App() {
                         </button>
                       </div>
                     )}
-                    <div className="example-section">
-                      <div className="eyebrow">OR TRY A LITTLE PLOT TWIST</div>
-                      {EXAMPLE_DISRUPTIONS.map((example) => (
-                        <button
-                          key={example.icon}
-                          className={`example-button ${disruption === example.text ? "example-active" : ""}`}
-                          onClick={() => chooseExample(example.text)}
-                          disabled={busy}
-                        >
-                          <span className={`example-icon ${example.icon}`}>
-                            {example.icon === "clock" ? (
-                              <Clock3 size={16} />
-                            ) : example.icon === "room" ? (
-                              <DoorOpen size={16} />
-                            ) : (
-                              <Plus size={16} />
-                            )}
-                          </span>
-                          {example.label}
-                          <ArrowUpRight size={14} />
-                        </button>
-                      ))}
-                    </div>
+                    {isSample && (
+                      <div className="example-section">
+                        <div className="eyebrow">
+                          OR TRY A LITTLE PLOT TWIST
+                        </div>
+                        {EXAMPLE_DISRUPTIONS.map((example) => (
+                          <button
+                            key={example.icon}
+                            className={`example-button ${disruption === example.text ? "example-active" : ""}`}
+                            onClick={() => chooseExample(example.text)}
+                            disabled={busy}
+                          >
+                            <span className={`example-icon ${example.icon}`}>
+                              {example.icon === "clock" ? (
+                                <Clock3 size={16} />
+                              ) : example.icon === "room" ? (
+                                <DoorOpen size={16} />
+                              ) : (
+                                <Plus size={16} />
+                              )}
+                            </span>
+                            {example.label}
+                            <ArrowUpRight size={14} />
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </>
                 )}
 
@@ -1564,6 +1830,9 @@ function App() {
                     <div className="reported-change">
                       <span className="eyebrow">THE CHANGE</span>
                       <p>{disruption}</p>
+                      <p className="interpretation-confirmation">
+                        {result.interpretation.description}
+                      </p>
                       {!applied && (
                         <button
                           onClick={() => {
@@ -1595,6 +1864,12 @@ function App() {
                         >
                           Adjust the change
                           <ArrowRight size={16} />
+                        </button>
+                        <button
+                          className="secondary-button full-width"
+                          onClick={() => setEditor("edit")}
+                        >
+                          Edit event constraints
                         </button>
                       </>
                     )}
@@ -1715,7 +1990,7 @@ function App() {
                       <span>
                         <span className="tiny-status-dot" />
                         {result.mode === "demo"
-                          ? "How the local demo worked"
+                          ? "How the planner checked this"
                           : "How the repair was made"}
                       </span>
                       <ChevronDown
@@ -1776,7 +2051,7 @@ function App() {
                       ? "Connected to NVIDIA Nemotron through your Nebius service."
                       : useService
                         ? "The connected service is in demo mode. No model is called."
-                        : "Local demo · real constraint checks, no model calls."}
+                        : "Works on this device · no account or AI calls needed."}
                   </span>
                 </div>
               </section>
@@ -1842,7 +2117,9 @@ function App() {
             <span>Less scrambling. More being there.</span>
             <span>
               Ripple <i />{" "}
-              {useService ? "Connected workspace" : "A working local demo"}
+              {useService
+                ? "Connected workspace"
+                : "Your plan stays on this device"}
             </span>
           </footer>
         </main>
@@ -1873,6 +2150,63 @@ function App() {
             <X size={15} />
           </button>
         </div>
+      )}
+
+      {editor && (
+        <EventEditor
+          plan={editor === "edit" ? plan : null}
+          onSave={saveEvent}
+          onClose={() => setEditor(null)}
+        />
+      )}
+
+      {modal === "events" && (
+        <Modal
+          title="Your events"
+          eyebrow="SAVED ON THIS DEVICE"
+          onClose={() => setModal(null)}
+        >
+          <p className="modal-intro">
+            Switch between your current event and up to six recent events.
+            Download event JSON to keep a backup beyond this browser.
+          </p>
+          <div className="saved-event-list">
+            <div className="saved-event active">
+              <div>
+                <strong>{plan.name}</strong>
+                <span>{plan.date} · Current event</span>
+              </div>
+              <Check size={18} />
+            </div>
+            {events
+              .filter((item) => item.id !== plan.id)
+              .map((item) => (
+                <button
+                  className="saved-event"
+                  key={item.id}
+                  onClick={() => saveEvent(item)}
+                >
+                  <div>
+                    <strong>{item.name}</strong>
+                    <span>
+                      {item.date} · {item.sessions.length} activities
+                    </span>
+                  </div>
+                  <ArrowRight size={18} />
+                </button>
+              ))}
+          </div>
+          <button
+            className="primary-button"
+            onClick={() => {
+              setModal(null);
+              setEditor("create");
+            }}
+          >
+            <Plus size={16} />
+            Create another event
+          </button>
+        </Modal>
       )}
 
       {modal === "checks" && (
@@ -1915,8 +2249,9 @@ function App() {
           onClose={() => setModal(null)}
         >
           <p className="modal-intro">
-            The local demo works immediately. Connect your own Ripple backend to
-            use NVIDIA Nemotron on Nebius Token Factory.
+            The local planner works with your own events, without an account.
+            Connect a Ripple backend to use NVIDIA Nemotron on Nebius Token
+            Factory.
           </p>
           <div
             className={`connection-choice ${!useService ? "connection-active" : ""}`}
@@ -1925,7 +2260,7 @@ function App() {
               <LayoutList size={20} />
             </div>
             <div>
-              <strong>Local demo</strong>
+              <strong>Local planner</strong>
               <p>
                 Deterministic repairs in this browser. No API key or model call.
               </p>
@@ -1937,11 +2272,11 @@ function App() {
                 clearRepair();
                 setModal(null);
                 setToast(
-                  "Using the local demo. Your event plan stays in this browser.",
+                  "Using the local planner. Your event plan stays in this browser.",
                 );
               }}
             >
-              {!useService ? "In use" : "Use demo"}
+              {!useService ? "In use" : "Use local planner"}
             </button>
           </div>
           <div className="settings-service">
@@ -2084,10 +2419,10 @@ function App() {
               <strong>Open models. Practical work.</strong>
               <p>
                 The live backend uses NVIDIA Nemotron on Nebius Token Factory.
-                The browser demo runs a bounded local search and the same kinds
-                of constraint checks; it does not call a model. Search results,
-                when provided by the live service, remain suggestions for a
-                person to verify.
+                The local planner runs a bounded schedule search and the same
+                kinds of constraint checks; it does not call a model. Search
+                results, when provided by the live service, remain suggestions
+                for a person to verify.
               </p>
             </div>
           </div>
@@ -2111,8 +2446,8 @@ function App() {
         >
           <p className="modal-intro">
             This replaces the current event with the Fieldnotes sample and
-            clears this session’s change log. Download your event JSON first if
-            you want to keep it.
+            clears the sample’s change log. Your current event will be kept in
+            Your events. Download event JSON if you want to keep it.
           </p>
           <div className="reset-actions">
             <button
@@ -2131,7 +2466,7 @@ function App() {
             <button
               className="primary-button"
               onClick={() => {
-                setPlan(clonePlan(SAMPLE_PLAN));
+                saveEvent(clonePlan(SAMPLE_PLAN));
                 setHistory([]);
                 clearRepair();
                 setDisruption("");
