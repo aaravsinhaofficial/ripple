@@ -1,71 +1,71 @@
-# Ripple — Keep the day moving
+# Ripple — Make today workable
 
-**Submission working copy.** Best Apps and Agents track. The application is being built for this hackathon. Live provider calls, cloud deployment, measured live evaluation, and the final public video are still pending. Reconcile this document with the final verified build before entering it on Devpost.
+**Working submission copy: Best Apps and Agents.** The current product is a daily recovery planner. The earlier event planner remains available at `?workspace=events`. Live provider execution, cloud deployment, the final public video and user evaluation are still pending. Update the evidence below against the exact submitted revision.
 
 ## Short description
 
-Ripple helps community-event organizers repair a disrupted run of show: compare practical alternatives, inspect constraint checks, and prepare handoffs for the people affected.
+Ripple turns tasks and fixed commitments into a realistic day plan, then helps you recover when the day changes. It protects the stop time you set, shows unfinished work explicitly, and uses optional AI to turn messy notes into task drafts and difficult tasks into actionable starting briefs.
 
 ## Inspiration
 
-A speaker running late is rarely just a calendar edit. The next session may need the same room, a workshop may need equipment that cannot move, and lunch may already be fixed. For a volunteer organizer, the hard part is finding a workable change and making sure everyone acts on the same plan.
+A to-do list can hold more work than a day can contain. When a meeting runs over or something urgent arrives, moving all the remaining tasks later disguises that mismatch. The person still needs to choose what to do, what to defer, and which deadline needs attention.
 
-Ripple focuses on that moment: the day is already planned, something changes, and the organizer needs a repair they can understand quickly.
+Ripple focuses on that repeated decision. It starts with a small amount of information and makes the consequences of a changed day visible before the user accepts a new plan.
 
 ## What it does
 
-Organizers create their own event with a normal form and editable agenda, or explore the fictional Fieldnotes Community Day sample. They select the exact activity or room and what changed, or describe an incident such as “Maya is running 40 minutes late for her keynote.” Ripple evaluates repair alternatives and shows the changes beside the run of show. An ongoing unlocked activity can be extended without moving its original start, room, or owner; fixed commitments and completed activities stay protected.
+A person can start with an empty workspace, add task names and rough estimates, record fixed commitments and choose a finish time. Quick capture turns a multiline list into editable drafts. The planner creates time blocks with breaks, shows work that does not fit and exposes the checks behind the proposal. Nothing is marked done because a scheduled block has passed.
 
-Each proposal carries explicit constraint checks. The organizer compares alternatives and applies one to the local plan. Targeted handoff drafts include the event date, timezone, venue, and before/after changes. Schedule and calendar exports make the plan portable; recent events and repair history persist on the device. The organizer controls any communication outside Ripple.
+When the day changes, a guided form handles four concrete cases: lost time, a task needing longer, urgent work, or an earlier finish. Ripple displays the old and proposed task times and keeps all unplaced minutes visible. Applying the proposal updates the local plan. History makes recent changes reversible.
 
-The local planner works with user-created events without accounts. Its rule-based mode is explicit and does not represent an NVIDIA model response.
+For more complex days, task details add projects, priorities, due dates and times, prerequisites, recurrence and a choice of uninterrupted or split work. A focus timer supports doing the work. Text, ICS and validated workspace backups make it portable. The core product needs no account or connected service.
+
+## Where AI helps
+
+The daily API uses NVIDIA Nemotron Nano on Nebius Token Factory to turn a messy note into structured task drafts. The user reviews those drafts before adding them; assumed durations are labeled. Real dates, bounded estimates and dependency references are validated independently.
+
+Nemotron Super produces a concise starting brief for a selected task. When the user explicitly chooses research, a bounded Tavily search supplies sources for actionable steps. The service rejects citations that do not match retrieved URLs. Users can save the reviewed steps into task notes or download the brief. The service does not execute those steps.
+
+This division keeps hard scheduling constraints in deterministic code while using models for language interpretation and task preparation. A daily assistance request makes at most one model call and one optional basic search. Failures remain explicit; a local result is never substituted for a failed live request.
+
+**Implemented does not mean runtime-verified.** The adapters, schema checks, routing, traces and failure handling are implemented and tested with mocks. No successful real Nebius/NVIDIA or Tavily call is claimed yet. The final submission must show actual execution.
 
 ## How it is built
 
-The frontend uses React and TypeScript and is designed for GitHub Pages. The Python service provides the live orchestration path and keeps provider credentials on the server.
+React, TypeScript and Vite provide the static browser workspace. Its local planner evaluates three scheduling orders, then independently checks the resulting blocks. Task minutes, fixed commitments, working hours, same-day time deadlines, prerequisites, splitting and breaks must remain consistent. Overflow remains part of the output.
 
-The intended live routing gives Nemotron Nano the prose-extraction task and Nemotron Super the repair-planning task through Nebius Token Factory. Guided organizer inputs already provide the exact change, so they skip Nano and go straight to Super. Difficult cases can escalate to the configured Ultra model. Deterministic validation checks proposals independently; rejected proposals do not become feasible merely because a model describes them confidently.
+Python and FastAPI provide `POST /api/daily/assist`, server-side provider credentials, authenticated access, request and concurrency limits, and a persistent daily live-attempt allowance. The returned trace preserves the actual served model and usage where supplied. App connection details remain in browser memory; the normal workspace is saved locally.
 
-The Tavily adapter searches for venue leads when a room closure has no feasible repair. Its results are leads with sources, not confirmed availability or reservations. The optional Nebius Serverless deployment paths separate the request-serving Endpoint from background processing in Jobs.
+The repository also contains Nebius Serverless Endpoint deployment templates. The existing Serverless Job worker and conditional Ultra escalation serve the retained event-repair API. Daily assistance currently uses a synchronous endpoint; the daily workflow must not be described as running a cloud Job unless a corresponding implementation and verified execution are added.
 
-**Verification boundary:** adapters and deployment instructions alone do not establish successful runtime use. The final submission must include the actual model IDs, live execution evidence, and deployment status. See the [evidence checklist](hackathon.md).
+## The focused contribution
 
-## What makes the approach useful
+Daily planning, task breakdown and automatic rescheduling are established features in existing products. Ripple does not claim a new category. Its MVP combines a low-setup personal workspace with reviewed recovery, explicit overflow and independently checked minute accounting.
 
-Ripple keeps an existing plan as the reference point. It makes the change visible, preserves supported hard constraints, and turns the chosen repair into a handoff. The useful output is a plan that the organizer can inspect and act on.
+That design may help people trust and act on a revised day, but this remains a hypothesis until observed with users. There is no claimed time saving, productivity increase or measured model advantage. The selected plan is one of the evaluated candidates, not a proof of the best possible schedule or smallest possible change.
 
-The disruption score compares evaluated alternatives; it is not a proof of global optimality. This version models one single-track day with an explicit repair-from time. It is scoped to the constraints in the event model. It does not infer unrecorded commitments, confirm external resources, or establish that a real event is safe to run.
+## Evidence before submission
 
-## Challenges and learning to complete after live testing
-
-Record one concrete example for each item that was actually encountered:
-
-- A model proposal the validator rejected, and the constraint it violated.
-- A model or API behavior that changed the implementation.
-- A meaningful difference between Nano, Super, and any escalation used.
-- An external resource search that helped the organizer decide what to do.
-- A measured latency, token-usage, or reliability tradeoff, with the underlying run.
-
-Do not replace these with invented experience or promotional claims. Record actual findings in the [provider feedback log](feedback.md).
-
-## Evidence to attach before submission
-
-| Field | Current status |
+| Item | Current evidence and remaining work |
 | --- | --- |
-| Public application URL | Published: [aaravsinhaofficial.github.io/ripple](https://aaravsinhaofficial.github.io/ripple/). Fresh-browser demo workflow passed; see the [validation record](validation.md). |
-| Public repository URL | [github.com/aaravsinhaofficial/ripple](https://github.com/aaravsinhaofficial/ripple). Public source, setup instructions, and GitHub-detected MIT license verified. |
-| Public YouTube URL | Not recorded or uploaded. Use the [demo storyboard](demo-script.md). |
-| Live NVIDIA on Nebius | Not verified; requires an account, credited balance, credentials, and an end-to-end run. |
-| Tavily runtime | Not verified; requires an account, key, and an appropriate search case. |
-| Serverless Endpoint / Job | Do not claim deployment until each workload has run successfully. |
-| Evaluation results | [Local validation](validation.md): 74 frontend tests, 85 Python tests, 23 cross-runtime cases, and 13 browser workflows passed; production build passed. Live model evaluation is pending. |
-| Provider feedback | [Template prepared](feedback.md); actual runtime observations are pending. |
-| User validation | No user-study or time-saving claim is made. |
+| Public app | [GitHub Pages URL](https://aaravsinhaofficial.github.io/ripple/) exists. Verify the new daily revision after publication; earlier public checks concerned the event workspace. |
+| Public source | [Repository](https://github.com/aaravsinhaofficial/ripple) includes setup instructions and an MIT license. Record the final commit. |
+| Core daily workflow | Implemented in the browser: capture, edit, plan, recover, review/apply, completion, recurrence, history and exports. Re-run the daily browser tests on the final revision. |
+| Local correctness | 137 frontend tests, 123 Python tests (including 38 daily assistance cases), 23 browser workflows, 23 retained event-contract cases and the production build passed for v0.3.0. Provider tests use mocks or the local rules service. |
+| NVIDIA on Nebius | Pending real calls. Save the model identity, usage, response, duration and review outcome from capture and a task brief. |
+| Tavily | Pending real search. Show the explicit user action, retrieved sources and accepted source-linked brief. |
+| Nebius infrastructure | Templates are prepared. No Endpoint or Job deployment is claimed without a completed workload and actual resource evidence. |
+| Public video | Pending. Use the [under-three-minute storyboard](demo-script.md). |
+| User feedback | Pending. Record observed friction and usefulness, not invented impact. |
 
-## Suggested evaluation before recording
+Mock tests do not measure model quality, runtime latency, cost or service availability. A health response proves configuration only. The existing event evaluation harness tests event repair and cannot stand in for daily assistance evaluation.
 
-Independent local contract spot checks accepted the sample in both TypeScript and Python and rejected unknown event fields, 37 activities, an 800-minute activity, and a room capacity above the shared limit. The three sample incidents were also run through the Python demo service: all returned candidates passed the TypeScript validator and produced handoff exports without missing fields. These checks exercise validation and integration boundaries; they do not measure model quality or demonstrate provider runtime. Re-run the repository's tests on the final revision.
+## Suggested final evaluation
 
-Use a small, published set of incident cases: a speaker delay, an unavailable room, extra session time, an unknown target, and an infeasible change against fixed commitments. For each, save the interpretation, candidate outcome, validator result, affected sessions, and handoff. Include one malformed provider response and one provider failure.
+Use a small published set of daily cases: a simple day, an overfull day, a prerequisite that cannot fit, a lost-time recovery, and an earlier stop time. Confirm that all estimated work stays accounted for, fixed commitments remain intact, and rejected imports or edits preserve the saved workspace.
 
-Report how many cases were attempted and passed, what failed, and which modes were tested. Separate local tests from live model evaluation. For impact, a short organizer trial with the same incident is more persuasive than an estimated “hours saved” figure.
+For the live API, capture an explicit-duration list, a note with missing estimates, a note with an explicit dependency and a selected-task brief. Add one sourced research case. Save the actual request, mode, model trace, accepted output and any failure, with secrets removed. Include malformed provider output and rate/credit failure behavior using mocks separately from live quality results.
+
+Before claiming benefit, ask a person from the intended audience to enter their real day, react to an interruption and explain the resulting overflow. Observe whether they can decide what to do next without coaching. Record where the interface or estimates caused confusion.
+
+Use the [provider feedback log](feedback.md) for actual runtime findings. Keep the README, video and submission evidence consistent with what ran.

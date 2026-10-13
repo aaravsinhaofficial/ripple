@@ -1,0 +1,86 @@
+.d-editor-dialog {
+  width: min(630px, calc(100vw - 28px));
+  max-height: min(900px, calc(100dvh - 32px));
+  margin: auto;
+  padding: 0;
+  border: 1px solid #dce2d3;
+  border-radius: 18px;
+  background: #fff;
+  color: #344232;
+  box-shadow: 0 24px 90px #263d2635;
+  overflow: hidden;
+  font-size: 14px;
+  line-height: 1.5;
+}
+.d-editor-dialog[open] { display: flex; flex-direction: column; }
+.d-editor-dialog::backdrop { background: #26332165; backdrop-filter: blur(3px); }
+.d-editor-header { display: flex; gap: 20px; justify-content: space-between; flex: 0 0 auto; padding: 26px 28px 22px; border-bottom: 1px solid #e5eade; }
+.d-editor-header h2 { margin: 6px 0; font-family: 'Instrument Serif', Georgia, serif; font-size: 31px; line-height: 1.2; font-weight: 400; letter-spacing: -.4px; }
+.d-editor-header p { margin: 0; color: #637056; }
+.d-editor-header .d-editor-eyebrow { color: #63774f; font-size: 10px; font-weight: 700; letter-spacing: 1.3px; }
+.d-editor-close { display: grid; place-items: center; width: 36px; height: 36px; padding: 0; border: 0; border-radius: 8px; background: #f1f4ea; color: #647653; flex: 0 0 auto; }
+.d-editor-close:hover { background: #e8efda; }
+.d-editor-form { display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
+.d-editor-body { padding: 24px 28px; overflow-y: auto; overscroll-behavior: contain; scroll-padding-block: 18px; min-height: 0; }
+.d-editor-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px 18px; }
+.d-editor-span { grid-column: 1 / -1; }
+.d-editor-field { display: flex; flex-direction: column; gap: 7px; min-width: 0; }
+.d-editor-field > label, .d-editor-field > legend { color: #425637; font-size: 13px; font-weight: 650; }
+.d-editor-field input:not([type=checkbox]), .d-editor-field select, .d-editor-field textarea {
+  width: 100%; min-width: 0; height: 44px; border: 1px solid #d2dec5; border-radius: 8px; background: #fff; padding: 10px 12px; color: #34462d; font: inherit;
+}
+.d-editor-field input::placeholder, .d-editor-field textarea::placeholder { color: #748167; }
+.d-editor-field textarea { min-height: 86px; height: auto; resize: vertical; }
+.d-editor-field [aria-invalid=true] { border-color: #ae5145; background: #fffafa; }
+.d-editor-field input:disabled { background: #f3f5ee; color: #68705f; }
+.d-editor-dialog :focus-visible { outline: 3px solid #95b771; outline-offset: 2px; }
+.d-editor-help, .d-editor-note { margin: 0; color: #69785b; font-size: 12px; line-height: 1.5; }
+.d-editor-note { padding: 11px 13px; background: #f4f7ef; border-radius: 8px; }
+.d-editor-field-error { font-size: 12px; color: #9e3e32; }
+.d-editor-presets { display: flex; gap: 7px; margin-top: 2px; }
+.d-editor-presets button { min-height: 30px; padding: 4px 12px; border: 1px solid #dce5d1; border-radius: 6px; background: #fafcf6; color: #607447; font: inherit; font-size: 12px; }
+.d-editor-presets button[aria-pressed=true] { border-color: #99b76e; background: #edf4dc; color: #4b6535; }
+.d-editor-more { margin-top: 24px; padding-top: 17px; border-top: 1px solid #e7eddd; }
+.d-editor-more > summary { padding: 2px 0 16px; cursor: pointer; color: #4d6739; font-size: 13px; font-weight: 650; }
+.d-editor-more > summary::marker { color: #8baa68; }
+.d-editor-check { display: flex; gap: 9px; align-items: flex-start; color: #465c39; font-size: 13px; font-weight: 500; }
+.d-editor-check input { width: 16px; height: 16px; margin: 2px 0 0; accent-color: #719544; flex: 0 0 auto; }
+.d-editor-check small { display: block; margin-top: 3px; font-size: 12px; color: #6a7b5b; font-weight: 400; }
+.d-editor-check.d-editor-disabled { opacity: .65; }
+.d-editor-dependencies { min-width: 0; border: 0; margin: 0; padding: 0; }
+.d-editor-dependencies legend { padding: 0 0 9px; font-weight: 650; font-size: 13px; color: #425637; }
+.d-editor-dependency-list { display: grid; gap: 12px; max-height: 180px; overflow-y: auto; padding: 12px; border: 1px solid #e1e9d8; border-radius: 8px; }
+.d-editor-footer { display: flex; flex: 0 0 auto; align-items: center; justify-content: space-between; gap: 16px; padding: 17px 28px; border-top: 1px solid #e1e8d7; background: #fafcf6; }
+.d-editor-footer-note { max-width: 255px; color: #667758; font-size: 11px; }
+.d-editor-actions { display: flex; flex-wrap: wrap; gap: 9px; align-items: center; }
+.d-editor-button { min-height: 42px; padding: 10px 16px; border: 1px solid #d7e1c9; border-radius: 8px; background: #fff; color: #526c3e; font: inherit; font-size: 13px; font-weight: 550; cursor: pointer; }
+.d-editor-button:hover { background: #eff5e5; }
+.d-editor-button.d-editor-primary { background: #516e38; color: #fff; border-color: #516e38; }
+.d-editor-button.d-editor-primary:hover { background: #415b2b; }
+.d-editor-button.d-editor-danger { color: #a34f46; border-color: #e6cdc8; background: #fff; }
+.d-editor-button:disabled { cursor: not-allowed; opacity: .5; }
+.d-editor-errors, .d-editor-discard { display: flex; align-items: flex-start; gap: 10px; padding: 14px 15px; background: #fff6f2; border: 1px solid #ecd1c7; border-radius: 9px; font-size: 13px; color: #854c3f; }
+.d-editor-errors { margin-bottom: 20px; }
+.d-editor-errors > svg, .d-editor-discard > svg { flex-shrink: 0; margin-top: 2px; }
+.d-editor-errors ul { padding-left: 18px; margin: 5px 0 0; }
+.d-editor-errors li + li { margin-top: 3px; }
+.d-editor-discard { margin: 16px 24px 0; flex: 0 0 auto; }
+.d-editor-discard p { margin: 4px 0 11px; }
+.d-editor-time-caption { margin-top: 3px; }
+@media (max-width: 600px) {
+  .d-editor-dialog { width: calc(100vw - 20px); max-height: calc(100dvh - 20px); border-radius: 14px; }
+  .d-editor-header { padding: 21px 20px 18px; gap: 12px; }
+  .d-editor-header h2 { font-size: 29px; }
+  .d-editor-header > div { min-width: 0; }
+  .d-editor-body { padding: 20px; }
+  .d-editor-grid { gap: 18px 12px; }
+  .d-editor-field input:not([type=checkbox]), .d-editor-field select, .d-editor-field textarea { font-size: 16px; padding-inline: 10px; }
+  .d-editor-footer { padding: 15px 20px; flex-wrap: wrap; gap: 12px; }
+  .d-editor-footer-note { max-width: none; width: 100%; }
+  .d-editor-footer > .d-editor-actions { margin-left: auto; }
+  .d-editor-discard { margin: 12px 16px 0; }
+}
+@media (max-width: 390px) {
+  .d-editor-grid { grid-template-columns: 1fr; }
+  .d-editor-span { grid-column: auto; }
+}

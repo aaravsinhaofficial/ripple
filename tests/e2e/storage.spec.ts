@@ -13,7 +13,7 @@ test("unavailable browser storage stays visible while repairs and downloads stil
       );
     };
   });
-  await page.goto("./");
+  await page.goto("./?workspace=events");
   await expect(page.getByRole("alert")).toContainText("could not save");
   await page
     .getByLabel("Choose a change", { exact: true })

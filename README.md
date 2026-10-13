@@ -1,86 +1,107 @@
 # Ripple
 
-**Keep the day moving.** Constraint-checked schedule repair for people running community events.
+**Make today workable.** A daily planner that keeps unfinished work visible when the day changes.
 
-[Open Ripple](https://aaravsinhaofficial.github.io/ripple/) · [Live AI setup](docs/deployment.md) · [Hackathon submission](docs/submission.md) · [MIT license](LICENSE)
+[Open Ripple](https://aaravsinhaofficial.github.io/ripple/) · [Product guide](docs/product.md) · [Live service setup](docs/deployment.md) · [Submission draft](docs/submission.md) · [MIT license](LICENSE)
 
 [![Verify](https://github.com/aaravsinhaofficial/ripple/actions/workflows/ci.yml/badge.svg)](https://github.com/aaravsinhaofficial/ripple/actions/workflows/ci.yml)
 
-A speaker is late. A room goes offline. The opening session runs long. A small change becomes six conversations and a broken schedule.
+You planned to finish a draft, answer a client, and prepare for a meeting. Then an interruption took an hour. Moving everything later hides the problem: some work no longer fits before you need to stop.
 
-Ripple turns that disruption into a repair you can inspect: what moves, what stays fixed, which constraints pass, and who needs a handoff. You choose a repair before it becomes the new local plan. Messages are prepared as drafts for your review.
+Ripple turns your tasks and fixed commitments into a day you can review. When time disappears, a task grows, urgent work arrives, or you need to finish earlier, it proposes a revised plan and shows what changed. Every estimated task minute is either scheduled or listed as unfinished work. Your stop time remains a boundary.
 
-![Ripple comparing two checked schedule repairs and preparing targeted handoff drafts](docs/assets/ripple-repair.png)
+![Ripple daily workspace with tasks, fixed commitments, and a reviewed day plan](docs/assets/ripple-daily.png)
 
-## Project status
+## Try it in two minutes
 
-The public GitHub Pages app includes a **working local planner for your own events**, alongside a clearly identified fictional sample. Create an event in the built-in editor, select an exact activity or room, compare checked repairs, and approve a change. Download the current schedule, calendar file, or contextual handoff drafts. No account or JSON editing is required.
+1. Add a task and its estimated remaining minutes, or open **Quick capture** and paste one task per line.
+2. Set your working hours in **Preferences** and add any fixed commitments. Choose **Plan my day**, review the schedule and overflow, then apply it.
+3. Choose **Day changed?** to recover from an interruption. Review the revised times and work that does not fit before applying the change.
 
-The local planner uses deterministic scheduling rules, not an AI model. The repository also contains the NVIDIA Nemotron / Nebius Token Factory service and optional Tavily search integration. **Live provider calls and Nebius Cloud deployment still require accounts, credentials, and runtime verification.** This is not yet a completed hackathon submission.
+You can start with the sample day or your own empty workspace. There is no account, subscription, or payment flow.
 
-No API keys belong in the frontend or this repository. GitHub Pages hosts static assets; the live service is deployed separately.
+Example for the local Quick capture form:
 
-## Run the app
+```text
+Draft the project update 45m #Work !high due:today
+Reply to the client 20m #Admin
+Practice a new skill 30m #Personal ~weekdays
+```
 
-Use Node.js 22.16 or later.
+Review the estimates before adding the drafts. Missing estimates start at 30 minutes. Use task details for deadlines, dependencies, notes, and recurrence.
+
+## What works
+
+| Everyday use | More control when needed |
+| --- | --- |
+| Quick task entry and reviewed multiline capture | Projects, search, priorities, dates and time deadlines |
+| Time blocks around fixed commitments | Prerequisites, optional task splitting, focus and break lengths |
+| Four guided ways to recover a changed day | Before/after review, explicit overflow and independent checks |
+| Focus timer and manual completion | Daily, weekday and weekly repeats created on completion |
+| Saved workspace on this device | Recent history, undo, validated backup and restore |
+| Portable day plan | Text and timezone-aware ICS downloads; no automatic calendar sync |
+
+Tasks carry forward until you finish or delete them. A timer ending or a time block passing never marks work done. For partially finished work, update the remaining estimate before replanning. Browser storage is not device sync; download a backup to keep a portable copy.
+
+## Optional AI assistance
+
+The core planner runs in the browser with deterministic rules. Connect a private Ripple service when you want help turning a messy note into task drafts or finding a way to start a difficult task.
+
+- **Capture:** NVIDIA Nemotron Nano extracts task drafts through Nebius Token Factory. Review the titles, estimates, dates and dependencies before adding them.
+- **Break down a task:** Nemotron Super proposes a short starting brief with concrete steps. Save it to task notes or download it after review.
+- **Find useful sources:** An explicit research action makes one basic Tavily search, then Super creates source-linked steps. Cited URLs must match retrieved results. Citation matching verifies source identity, not the truth of every claim.
+
+Provider credentials stay on the server. The daily workspace keeps the service URL and app access token in memory, clearing them on reload. Task text is sent only for a requested assistance action. Search receives the selected task title or research query, not the entire workspace or private task notes. Live failures remain visible; they are not replaced with a local answer.
+
+**Status:** the daily MVP and provider adapters are implemented and tested locally, with provider responses mocked. Real NVIDIA-on-Nebius calls, Tavily runtime, cloud deployment and the final public video still require credentials and verification. A connection health check is not live inference proof. See the [submission evidence checklist](docs/submission.md).
+
+## Run locally
+
+Use Node.js 22.16 or later:
 
 ```sh
 npm ci
 npm run dev
 ```
 
-Open the local URL printed by Vite. Try a disruption, inspect the alternatives, apply a repair, and export the handoffs. Use the app's connection settings to point it at a separately running backend.
+Open the URL printed by Vite. The frontend needs no backend for task entry, planning, recovery, focus, history or exports.
 
-Choose **Create event** to enter your day and agenda, then use **Choose a change** for a delay, room closure, or extra session time. **Edit event** changes the underlying commitments. See [Bring your own event](docs/event-format.md) for the everyday workflow and optional JSON import.
+For optional assistance, use Python 3.12 or later:
+
+```sh
+python3.12 -m venv .venv
+.venv/bin/python -m pip install -r server/requirements.txt
+cp .env.example .env
+.venv/bin/python -m uvicorn server.app:app --host 127.0.0.1 --port 8000
+```
+
+The default `RIPPLE_MODE=demo` service makes rule-based drafts and checklists with zero provider calls. Connect `http://127.0.0.1:8000` from the app's assistance settings. For real inference, set `RIPPLE_MODE=live`, `NEBIUS_API_KEY`, and `RIPPLE_ACCESS_TOKEN` privately on the server. Optional web research also needs `RIPPLE_ENABLE_TAVILY=true` and `TAVILY_API_KEY`. Restart after changing configuration. Never put provider keys in `VITE_*`, frontend code or browser storage.
+
+The same FastAPI service hosts `POST /api/daily/assist` and the earlier event API. See [the product guide](docs/product.md#daily-assistance-api) for the daily contract and [deployment instructions](docs/deployment.md) for origins, credentials, limits and infrastructure. The deployment guide's repair queue and Ultra escalation concern the retained event workspace; daily assistance uses one synchronous, bounded request.
+
+## How the day stays consistent
+
+The planner compares three deterministic scheduling orders. Independent checks preserve fixed commitments, prevent task overlaps, enforce working hours and same-day time deadlines, order prerequisites, respect splitting and breaks, and account for all remaining task minutes. It does not claim the mathematically optimal plan or minimum possible change.
+
+If work cannot fit, Ripple shows the unplaced minutes and the reason. Existing overlapping fixed commitments are preserved and reported for you to resolve. Overdue dates remain visible. No estimate is silently shortened, and no missed deadline is silently moved.
+
+## Verify
 
 ```sh
 npm test
+.venv/bin/python -m pytest server/tests -q
+npm run test:contracts
+npx playwright install chromium
+npm run test:e2e
 npm run build
-npm run preview
 ```
 
-Backend installation, credentials, allowed origins, and Nebius deployment are covered in [the deployment guide](docs/deployment.md). [Free-credit setup](docs/resources.md) includes the official hackathon offers.
+Daily tests cover scheduling and task-accounting invariants, storage, capture and exports. Backend assistance tests exercise bounded model routing, strict schemas, dates, dependency cycles, grounded links, authentication, limits and explicit failure behavior with mocks. The cross-runtime suite covers the earlier event engine. Re-run on the revision being submitted; historical event-workspace counts in [the validation record](docs/validation.md) are not daily-product evidence.
 
-## How it works
+## Project context
 
-1. **Choose or interpret:** The guided form identifies the exact activity/room and change. In connected live mode, Nemotron Nano interprets freeform prose; guided inputs skip that unnecessary model call.
-2. **Propose:** Nemotron Super proposes schedule repairs. Ultra is reserved for difficult cases that fail validation.
-3. **Check:** Deterministic code checks identities, durations, locked sessions, rooms, people, capacity, buffers, and the event boundary. The repair-from time protects activities that have begun. An unlocked ongoing activity can be extended while preserving its start, room, and owner. Completed activities stay fixed. Invalid plans are never presented as feasible.
-4. **Compare:** See changes and tradeoffs before applying the lowest-disruption option among those evaluated. We do not claim global optimality.
-5. **Handoff:** Prepare targeted action cards. Applying a repair updates the local schedule; it does not send messages.
-6. **Find resources when relevant:** Tavily can discover resource-replacement leads. Search results are evidence to review, not confirmed availability.
+Ripple began as a single-track event schedule repair tool. That workspace remains available at [`?workspace=events`](https://aaravsinhaofficial.github.io/ripple/?workspace=events), with its own saved events and repair workflow. The default workspace now addresses the recurring problem of recovering a personal workday. [Product scope and tradeoffs](docs/product.md) explain the decision without claiming a new product category.
 
-The local planner uses the confirmed form fields or a browser-local text parser, then bounded schedule search. Both operating modes are visible. A failed live request is surfaced as an error, rather than silently replaced with rule-based output.
+The project is being prepared for the 2026 Nebius × NVIDIA Global AI Hackathon, Best Apps and Agents track. [Submission draft](docs/submission.md), [demo storyboard](docs/demo-script.md), [official setup resources](docs/resources.md), and [platform research](docs/platform-research.md) separate implemented work from pending runtime evidence.
 
-Plans, up to six recent events, and each event's latest 12 repairs stay in browser storage. They are not synced between devices. Export event JSON for a reusable backup. Storage failures are shown visibly while the open plan remains downloadable.
-
-## Technology
-
-| Component | Role |
-| --- | --- |
-| React + TypeScript + Vite | Static, responsive event workspace on GitHub Pages |
-| NVIDIA Nemotron Nano / Super / Ultra | Structured interpretation, repair proposals, difficult-case escalation |
-| Nebius Token Factory | OpenAI-compatible runtime inference for the NVIDIA models |
-| Python + FastAPI | Server-side orchestration, validation, and protected provider credentials |
-| Tavily | Optional, source-linked resource discovery |
-| Nebius Serverless Endpoints | Documented deployment path for the live API |
-| Nebius Serverless Jobs | Documented deployment path for asynchronous processing |
-
-See [platform notes](docs/platform-research.md) for sourced model and infrastructure details. Cloud deployment templates are prepared; they are not evidence of deployment.
-
-## For judges and contributors
-
-- [Submission draft and honest implementation status](docs/submission.md)
-- [Under-three-minute demo script](docs/demo-script.md)
-- [Rules, checklist, and evaluation gates](docs/hackathon.md)
-- [Account setup and credit resources](docs/resources.md)
-- [Deployment instructions](docs/deployment.md)
-- [Validation scope and reproducible checks](docs/validation.md)
-- [Five-case live evaluation command](docs/live-evaluation.md)
-- [Provider feedback log](docs/feedback.md)
-
-The project was started for the 2026 Nebius × NVIDIA Global AI Hackathon, Best Apps and Agents track. Its particular focus is **constraint-checked plan repair with visible tradeoffs and targeted handoffs**. It does not claim to be the first event AI tool.
-
-## License
-
-MIT. See [LICENSE](LICENSE). Model and service usage remains subject to the providers' terms.
+MIT licensed. See [LICENSE](LICENSE). Model and service use remains subject to provider terms.

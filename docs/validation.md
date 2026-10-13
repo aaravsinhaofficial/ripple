@@ -2,7 +2,24 @@
 
 This record concerns the local implementation. No real Nebius or Tavily credentials were available during this build. Mock-provider tests verify orchestration and failure handling; they do not establish model quality, latency, cost, or availability.
 
-## Observed results — October 12, 2026
+## Daily MVP — v0.3.0 · October 13, 2026
+
+The default product is now the daily recovery workspace. The earlier event workspace is retained at `?workspace=events`; its test history below remains scoped to that workflow.
+
+Local verification on the release working tree passed **137 frontend tests**, **123 Python tests**, **23 cross-runtime event cases**, **23 browser workflows** (10 daily and 13 retained event cases), and the production build. The frontend total includes 53 daily planner/storage/capture/export tests and 10 daily client-boundary tests. The Python total includes 38 daily assistance cases. Provider calls are mocked; the browser's actual HTTP service tests use rule-based mode.
+
+Daily browser coverage starts with an empty workspace, captures reviewed tasks, adds fixed appointments, previews without mutating the saved day, approves, loses time, and keeps all unscheduled minutes visible. It verifies dependencies, same-day deadlines, explicit completion, recurring-task duplicate prevention, focus timing, validated backup replacement, undo, TXT/ICS exports, phone layouts, keyboard/focus behavior, unavailable storage, unreadable data recovery and forged saved-plan rejection. Assistant checks cover the real local HTTP route, token isolation, visible capture metadata and cancellation without stale draft replacement.
+
+Public daily-only checks require no local backend or provider calls:
+
+```sh
+RIPPLE_TEST_BASE_URL=https://aaravsinhaofficial.github.io/ripple/ npx playwright test tests/e2e/daily.spec.ts
+node scripts/check-public.mjs
+```
+
+The daily HTTP-service test skips for the public static site. All other daily tests exercise the published frontend directly. Screenshots in `docs/assets/ripple-daily.png` show the implemented sample workspace, not a product mockup.
+
+## Earlier event workspace: observed results — October 12, 2026
 
 The final local checks passed on October 12, 2026, in the America/Chicago timezone. The tested snapshot was the working tree immediately before the initial commit; no commit SHA had been assigned to that snapshot when these checks ran.
 
@@ -29,7 +46,7 @@ The follow-up evaluation harness added nine mock-only tests. The complete Python
 
 ### Usability iteration — v0.2.0
 
-The complete current checks pass: **74 frontend tests, 85 Python tests, 23 cross-runtime cases, and 13 browser workflows**, plus a production build. All provider tests use mocks or the actual local demo API; no provider credits were consumed.
+The v0.2.0 checks passed: **74 frontend tests, 85 Python tests, 23 cross-runtime cases, and 13 browser workflows**, plus a production build. All provider tests use mocks or the actual local demo API; no provider credits were consumed.
 
 New browser coverage creates a custom event entirely through the editor, chooses the second of two activities owned by the same person, repairs only the intended activity, and downloads context-complete handoffs, a current schedule, and a correctly timed calendar file. It then reloads, checks preserved repair history, switches events on a phone-sized viewport, and returns to the approved plan. Other cases reject invalid edits without changing the baseline, preserve a fixed lunch when an ongoing extension is too large, accept an extension that fits, and keep the open plan downloadable when browser storage fails.
 
@@ -68,11 +85,10 @@ The public demo's examples are fictional. Local search is bounded and returns th
 
 ## Remaining evidence before submission
 
-1. Run the same representative incidents through real Nano and Super models on Token Factory. Save redacted provider trace and independent validator outcomes.
-2. Exercise one real Ultra escalation, or describe Ultra honestly as configured but not demonstrated.
-3. Trigger Tavily on an infeasible room closure; record source URLs and retrieval time. Confirm that no lead is presented as a confirmed booking.
-4. Deploy the Endpoint and execute a real Serverless Job, if claiming either integration. Record actual identifiers, statuses, and output.
-5. Ask an organizer to try the workflow. Record observed benefit and friction without inventing impact metrics.
-6. Record the final live workflow for the public YouTube submission and keep judge access available through the published judging period.
+1. Run real daily capture through Nano and task briefs through Super on Token Factory; preserve redacted request/response, actual model identity, usage and review outcome.
+2. Run one explicitly requested Tavily research case and retain the retrieved source URLs and resulting brief. Citation matching alone does not verify every claim.
+3. Deploy the Nebius Endpoint if claiming cloud hosting; record a successful actual workload. Serverless Jobs and Ultra currently belong to the retained event workflow and must remain described that way.
+4. Ask intended users to enter their real workday and recover from an interruption. Record observed usefulness and friction; no willingness to pay or impact is established by automated tests.
+5. Record the under-three-minute public YouTube demonstration using actual provider execution. Keep demo access available through judging.
 
-Use the [provider feedback template](feedback.md) to turn observed live behavior into reproducible feedback. Keep the [submission evidence ledger](hackathon.md) aligned with what actually ran.
+The [submission draft](submission.md) and [product guide](product.md) describe the current daily scope. Use the [provider feedback template](feedback.md) for actual runtime observations. No provider credentials or paid infrastructure were used during this iteration.

@@ -13,6 +13,7 @@ from pydantic import Field
 
 from .config import Settings
 from .constraints import failure_details, validate
+from .daily import DailyAssistRequest, DailyAssistResult, DailyAssistService
 from .jobs import JobStore, QueueError
 from .models import RepairRequest, RepairResult, StrictModel
 from .providers import ProviderError
@@ -39,9 +40,10 @@ async def execute_claim(store: JobStore, service: RepairService, claimed: dict):
         store.finish(claimed["id"], claimed["leaseToken"], error={"code": "repair_failed", "message": "The repair could not complete. The current schedule was not changed."})
 
 
-def create_app(settings: Settings | None = None, service: RepairService | None = None) -> FastAPI:
+def create_app(settings: Settings | None = None, service: RepairService | None = None, daily_service: DailyAssistService | None = None) -> FastAPI:
     settings = settings or Settings.from_env()
     service = service or RepairService(settings)
+    daily_service = daily_service or DailyAssistService(settings, nebius=service.nebius)
     store = JobStore(settings.database_path, settings.job_retention_hours)
     semaphore = asyncio.Semaphore(settings.max_concurrent_repairs)
     visits: dict[str, deque] = defaultdict(deque)
@@ -65,6 +67,7 @@ def create_app(settings: Settings | None = None, service: RepairService | None =
 
     app = FastAPI(title="Ripple private API", version="1.0.0", lifespan=lifespan, docs_url="/docs" if settings.mode == "demo" else None, redoc_url=None)
     app.state.store, app.state.service, app.state.settings = store, service, settings
+    app.state.daily_service = daily_service
     app.add_middleware(CORSMiddleware, allow_origins=list(settings.allowed_origins), allow_credentials=False, allow_methods=["GET", "POST", "OPTIONS"], allow_headers=["Content-Type", "Authorization"], max_age=600)
 
     @app.middleware("http")
@@ -78,7 +81,7 @@ def create_app(settings: Settings | None = None, service: RepairService | None =
                 if len(data) > limit:
                     return JSONResponse(status_code=413, content={"error": {"code": "too_large", "message": "The request is too large."}})
             request._body = bytes(data)
-            if request.url.path in {"/api/repair", "/api/jobs"}:
+            if request.url.path in {"/api/repair", "/api/jobs", "/api/daily/assist"}:
                 now = time.monotonic()
                 key = request.client.host if request.client else "unknown"
                 for stale in [k for k, q in visits.items() if not q or q[-1] < now - 60]:
@@ -87,7 +90,7 @@ def create_app(settings: Settings | None = None, service: RepairService | None =
                 while queue and queue[0] <= now - 60:
                     queue.popleft()
                 if len(queue) >= settings.max_requests_per_minute:
-                    return JSONResponse(status_code=429, content={"error": {"code": "rate_limit", "message": "Too many repair requests. Please wait a minute."}}, headers={"Retry-After": "60"})
+                    return JSONResponse(status_code=429, content={"error": {"code": "rate_limit", "message": "Too many requests. Please wait a minute."}}, headers={"Retry-After": "60"})
                 queue.append(now)
         response = await call_next(request)
         response.headers["Cache-Control"] = "no-store"
@@ -129,6 +132,12 @@ def create_app(settings: Settings | None = None, service: RepairService | None =
         async with semaphore:
             reserve()
             return await service.repair(payload)
+
+    @app.post("/api/daily/assist", response_model=DailyAssistResult, response_model_exclude_none=True, dependencies=[Depends(authorize)])
+    async def daily_assist(payload: DailyAssistRequest):
+        async with semaphore:
+            reserve()
+            return await daily_service.assist(payload)
 
     @app.post("/api/jobs", status_code=202, dependencies=[Depends(authorize)])
     async def enqueue(payload: RepairRequest):

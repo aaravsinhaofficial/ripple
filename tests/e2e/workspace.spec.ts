@@ -3,7 +3,7 @@ import { SAMPLE_PLAN } from '../../src/lib/data';
 
 test('repair, inspect, apply, export, and undo a delayed speaker', async ({ page }) => {
   await page.setViewportSize({width:1440,height:1000});
-  await page.goto('./');
+  await page.goto('./?workspace=events');
   await expect(page.getByRole('heading', { name: 'Keep a good day going.' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Local planner' })).toBeVisible();
   await page.screenshot({path:'artifacts/ripple-workspace.png', fullPage:true, animations:'disabled'});
@@ -38,7 +38,7 @@ test('repair, inspect, apply, export, and undo a delayed speaker', async ({ page
 });
 
 test('an impossible disruption stays blocked and does not change the event', async ({ page }) => {
-  await page.goto('./');
+  await page.goto('./?workspace=events');
   await page.getByRole('button', { name: 'Describe in words' }).click();
   await page.getByLabel('Describe the change to your event').fill('Maya is 8 hours late');
   await page.getByRole('button', { name: 'Find a way forward' }).click();
@@ -48,7 +48,7 @@ test('an impossible disruption stays blocked and does not change the event', asy
 });
 
 test('an imported event and accepted room repair survive reload', async ({ page }) => {
-  await page.goto('./');
+  await page.goto('./?workspace=events');
   const plan = {...SAMPLE_PLAN, id:'custom-event', name:'Our neighborhood makers day'};
   await page.locator('input[type=file]').setInputFiles({ name:'our-event.json', mimeType:'application/json', buffer: Buffer.from(JSON.stringify(plan)) });
   await expect(page.locator('.page-heading')).toContainText(plan.name);
@@ -63,7 +63,7 @@ test('an imported event and accepted room repair survive reload', async ({ page 
 
 test('mobile layout fits and the repair flow works', async ({ page }) => {
   await page.setViewportSize({width:390,height:844});
-  await page.goto('./');
+  await page.goto('./?workspace=events');
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   await page.screenshot({path:'artifacts/ripple-mobile.png', fullPage:true, animations:'disabled'});
   await page.getByRole('button', { name: 'A session needs more time' }).click();
@@ -73,7 +73,7 @@ test('mobile layout fits and the repair flow works', async ({ page }) => {
 });
 
 test('later room closures preserve earlier activities', async ({ page }) => {
-  await page.goto('./');
+  await page.goto('./?workspace=events');
   await page.getByLabel('Repair from time; earlier activities stay fixed').fill('13:10');
   await page.getByRole('button', { name:'We lost a room' }).click();
   await page.getByRole('button', { name:'Find a way forward' }).click();
@@ -85,7 +85,7 @@ test('later room closures preserve earlier activities', async ({ page }) => {
 });
 
 test('keyboard dialog closes and returns focus', async ({ page }) => {
-  await page.goto('./');
+  await page.goto('./?workspace=events');
   const opener = page.getByRole('button', {name:'Local planner'});
   await opener.click();
   await expect(page.getByRole('dialog')).toBeVisible();
@@ -97,7 +97,7 @@ test('keyboard dialog closes and returns focus', async ({ page }) => {
 test('the actual local API preserves an exact guided target and honest rules provenance', async ({ page, request }) => {
   const health = await (await request.get('http://127.0.0.1:8000/health')).json();
   expect(health.mode, 'Integration test requires a demo API; no live credits should be used').toBe('demo');
-  await page.goto('./');
+  await page.goto('./?workspace=events');
   await page.getByRole('button', {name:'Local planner'}).click();
   await page.getByLabel('Ripple backend URL').fill('http://127.0.0.1:8000');
   await page.getByRole('button', {name:'Check', exact:true}).click();
@@ -123,7 +123,7 @@ test('provider errors stay visible and organizer credentials never enter browser
     observedAuthorization = route.request().headers()['authorization'];
     return route.fulfill({status:503,json:{error:{code:'provider_limit',message:'Token Factory credits exhausted. No demo result was substituted.'}}});
   });
-  await page.goto('./');
+  await page.goto('./?workspace=events');
   await page.getByRole('button', {name:'Local planner'}).click();
   await page.getByLabel('Ripple backend URL').fill('https://ripple-test.invalid');
   await page.getByLabel('Organizer access token').fill('test-only-organizer-token');

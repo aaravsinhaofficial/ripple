@@ -1,45 +1,50 @@
-# Ripple demo storyboard
+# Ripple daily demo storyboard
 
-Target runtime: **2:50**, leaving a margin below three minutes. This is a recording plan, not evidence of a completed video. Keep the operating mode visible. Record the submission version only after live NVIDIA/Nebius operation has been verified.
+Target runtime: **2:50**, below the three-minute limit. This is a recording plan, not a completed video. The main story is a freelancer recovering a workday. Keep the actual assistance mode visible and show the user reviewing every generated draft.
 
-## Preparation
+## Prepare the exact build
 
-- Use the fictional single-track Fieldnotes Community Day plan and reset between takes. Show the repair-from time so the audience understands which activities can still change.
-- Use a fresh browser session with the final app URL and exact revision intended for judging.
-- Choose **Describe in words** and prepare “Maya is running 40 minutes late for her keynote.” This path demonstrates Nano interpretation followed by Super planning. The simpler guided form supplies an exact organizer-confirmed change and intentionally skips Nano. Verify repairs before recording; do not narrate numbers from a different run.
-- Have a real, relevant Tavily venue-search case ready if claiming that integration. An Assembly Hall closure may be useful because its large, fixed activities cannot simply move into the smaller studio. Confirm the final run is infeasible and actually invokes search; the ordinary Workshop Studio closure can be repaired without search.
-- Prepare a redacted runtime record showing the actual model, provider, stages, and validator results. Hide secrets and account details.
-- Use voice and screen capture; add captions. Avoid third-party music or assets unless licensed.
+Use a fresh browser session and the daily workspace at the final public URL. Record the commit and verify the complete workflow before the take. The earlier event workspace at `?workspace=events` is optional context, not the central product story.
+
+Start with the sample day or a small realistic day of your own. Include fixed commitments, a stop time, one time deadline and one dependent task. Make the initial plan feasible. Rehearse a changed planning start that leaves some work unplaced. The sample's project outline is due at noon and the slides depend on it; restarting after noon creates a useful deadline-and-dependency case if neither task has been completed. Explain that those tasks remain unfinished instead of implying that scheduled time was work actually done.
+
+For the live take, connect the real private API first. Verify a Nano capture, a Super brief and a Tavily research request with current credentials. Prepare a short task such as “Prepare the client website accessibility checklist, about 30 minutes” so source discovery serves the actual work. Use the observed output and timing; never narrate a canned model result as if it just ran.
+
+Have a redacted execution trace ready with actual returned model identifiers, provider usage and request outcome. A service health check, mock response, replay or configuration screen is not proof of inference. If waiting is cut for video length, make the edit clear and avoid a latency claim.
 
 ## Main take
 
 | Time | Show | Narration |
 | --- | --- | --- |
-| 0:00–0:15 | Briefly show Create event and the editable agenda, then the timeline with fixed commitments. | “Enter your own event, or try the sample. When a speaker is late or a session runs long, Ripple helps repair the schedule and prepare the handoff.” |
-| 0:15–0:35 | Enter the keynote delay and start the workflow. | “Maya is forty minutes late. I enter the incident against the existing run of show. The workflow first turns that sentence into a bounded change.” |
-| 0:35–1:00 | Live stages complete; open the execution detail. | After verification: “Nemotron Nano interprets the incident through Nebius Token Factory. Super proposes repairs. Code checks those proposals against the event's recorded constraints.” Name the actual models shown by the run. |
-| 1:00–1:25 | Two alternatives and their exact timeline differences. | “I can see which sessions move, the disruption score, and the tradeoff. This is the lowest-disruption result among the plans evaluated.” If only one valid plan exists, explain that instead of implying two. |
-| 1:25–1:45 | Expand constraint checks and one unchanged fixed commitment. | “The proposal must preserve the session list and pass the supported timing, room, people, equipment, and capacity checks. A good explanation does not override a failed check.” Only name checks the final build actually performs. |
-| 1:45–2:05 | Approve the selected proposal; open and download affected handoffs. | “I choose the repair before it updates my local plan. Ripple prepares the relevant handoffs so the people affected can act on the same change. I review and send these myself.” |
-| 2:05–2:30 | One brief relevant search or infeasible incident. | If live Tavily is verified: “When the incident needs outside resources, Tavily finds leads with source links. These are suggestions to verify, not booked replacements.” Otherwise show a blocked case: “If a repair cannot preserve the hard constraints, Ripple says so.” |
-| 2:30–2:50 | App plus a compact architecture/status view and repository link. | “The frontend is on GitHub Pages. The live service keeps model credentials on the server. [State the actual Endpoint/Job deployment status.] Ripple's focus is a small, inspectable change and a handoff an organizer can use.” |
+| 0:00–0:15 | The daily workspace, several tasks, fixed commitments and working hours. | “My task list fits until the day changes. Ripple helps me make a realistic plan and keep the unfinished work visible.” |
+| 0:15–0:40 | Quick capture with a short messy note; run the verified live capture, review its estimate and add the task. | “I can start with a task name and an estimate. With a connected service, Nemotron Nano turns a messy note into task drafts. I check the assumptions before adding them.” |
+| 0:40–1:00 | Plan my day, the preview, a fixed meeting and the stop time. Apply the initial plan. | “The planner puts work around my commitments. It checks the times and accounts for every estimated minute. I choose when the proposal becomes my plan.” |
+| 1:00–1:25 | Day changed? → lost time, then review the revised plan. | “Now an interruption means I cannot restart until this time. These tasks are still unfinished, so their remaining estimates stay in the plan.” |
+| 1:25–1:50 | Before/after changes, explicit unplaced minutes and the reason; apply the revised plan. | “Some work no longer fits. Ripple shows exactly what still needs time and which deadline or prerequisite is affected. It does not extend my stop time or pretend the work is done.” Use the actual displayed outcome. |
+| 1:50–2:15 | Open the selected task's assistance, request useful sources and show the verified result. | “When I need a way into a task, Super prepares actionable steps. This research action uses Tavily. The links must come from the retrieved sources, and I still review what they support.” |
+| 2:15–2:35 | Save a useful brief, show the focus timer and manual completion, then text or ICS export. | “I can keep the steps with the task, focus on the work, and mark it complete myself. The plan and my workspace are downloadable.” Do not mark an uncompleted demonstration task done as a real work claim. |
+| 2:35–2:50 | Compact runtime evidence and repository link. | “The core planner works locally without an account. Optional NVIDIA models run through Nebius Token Factory, with credentials on the private service. [State only the cloud deployment status actually verified.]” |
 
-## Optional swap for a verified Serverless Job
+The complete feature list is not the story. Keep projects, recurrence, history and advanced preferences to a brief glimpse unless they explain the selected day. The useful moment is the reviewed recovery and visible unfinished work.
 
-If a meaningful Job has completed, replace part of the final search segment with its background task, completion record, and useful output. Say what that work changes for the organizer. A manifest, a simulated progress animation, or a queued task without a completed cloud run is not evidence of a Nebius Job.
+## If real provider access is still pending
 
-Ultra is a conditional escalation. Mention it as executed only if the captured run genuinely used it. A short sentence explaining why the ordinary incident stayed on Nano/Super is enough; do not force a costly escalation just to display a badge.
+Record a clearly labeled development preview using local capture and a local checklist. Replace the live integration lines with:
 
-## If live access is still pending
+> “This preview uses the local planner and rule-based assistance. The Nebius and Tavily integrations are implemented and mock-tested; real provider execution has not yet been demonstrated.”
 
-Record a clearly labeled development preview with this replacement line: “This preview uses Ripple's local rule-based planner. It works with your own events without an account. The Nebius and Tavily paths are implemented for later credentialed testing; live runtime is not demonstrated here.”
+Do not present that preview as proof of the required NVIDIA-on-Nebius runtime. Complete real provider verification before the final submission. A local preview can still demonstrate the useful product workflow honestly.
 
-That preview is useful for reviewing the product, but it does not prove the required Nebius/NVIDIA runtime for the final submission. Finish account setup and runtime verification before using it as the sole integration evidence.
+## Infrastructure claims
+
+Daily assistance is a synchronous API call. The repository's background Job worker and conditional Ultra escalation currently serve event repair. Do not describe the daily workflow as executing either. Only mention an Endpoint deployment when the actual daily API has served a successful request from it, and show the corresponding deployment evidence.
 
 ## Final review
 
-- The video is public on YouTube and shorter than three minutes.
-- Every described action appears on screen and succeeds.
-- No fixture, replay, local computation, or planned feature is described as a live provider result.
-- Any latency, savings, or reliability statement comes from recorded measurements.
-- The demo, README, submission text, and evidence ledger agree about what has actually run.
+- The public YouTube video is shorter than three minutes.
+- Every narrated user action appears on screen and succeeds.
+- Task drafts, proposed plans and completed work are clearly distinguished.
+- The stop time, fixed commitments and overflow agree with the shown inputs.
+- Model identities and search citations come from the recorded live run.
+- Credentials, access tokens and private task details are redacted.
+- The video, README and submission text report the same verified status.
